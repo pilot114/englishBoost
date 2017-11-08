@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+    <title>englishBoost</title>
+
+    <!-- Required Stylesheets -->
+    <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap@next/dist/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+
+    <!-- Required scripts -->
+    <script src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+
+    <style type="text/css">
+		body {
+			font-family: Calibri;
+			font-size: 18px;
+		}
+	</style>
+  </head>
+
+<!-- https://bootstrap-vue.js.org/docs/components -->
+  <body>
+    <div id="app">
+      <b-container>
+        <b-row>
+	        <b-col>
+	        	<h1>English Boost</h1>
+		    	<p>Boost English learning with customized dictionaries</p>
+	        </b-col>
+	    </b-row>
+        <b-row>
+	        <b-col>
+	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
+
+	        	<p>{{ text }}</p>
+	        </b-col>
+	        <b-col>2
+	        </b-col>
+	    </b-row>
+      </b-container>
+    </div>
+
+    <script>
+      window.app = new Vue({
+        el: "#app",
+        data: {
+			textFile: null, // File object
+			text: null
+        },
+        watch: {
+			textFile: function() {
+				if (this.textFile) {
+					var reader = new FileReader();
+					reader.onload = function() {
+						app.text = reader.result;
+					};
+					reader.readAsText(app.textFile);
+				}
+			}
+        }
+      })
+    </script>
+
+  </body>
+</html>
