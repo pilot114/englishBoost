@@ -39,7 +39,7 @@
 	        <b-col>
 	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
 
-	        	<p>{{ text }}</p>
+	        	<p>{{ texts }}</p>
 	        </b-col>
 	        <b-col>2
 	        </b-col>
@@ -52,7 +52,8 @@
         el: "#app",
         data: {
 			textFile: null, // File object
-			text: null
+			text: null,
+			texts: []
         },
         watch: {
 			textFile: function() {
@@ -60,11 +61,26 @@
 					var reader = new FileReader();
 					reader.onload = function() {
 						app.text = reader.result;
+						app.texts.push( app.buildDictionary(app.text) );
 					};
 					reader.readAsText(app.textFile);
 				}
-			}
-        }
+				return [1,2,3];
+			},
+			texts: function() {
+				console.log(1);
+        		return [app.text];
+        	}
+        },
+        methods: {
+        	buildDictionary: function() {
+        		var words = app.text.split(/\W+/);
+				for (var i = 0; i < words.length - 1; i++) {
+				    words[i] += " ";
+				}
+        		return {phrases: [], words: words};
+        	}
+        } 
       })
     </script>
 
