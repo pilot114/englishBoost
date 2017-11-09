@@ -22,13 +22,16 @@
 			font-family: Calibri;
 			font-size: 18px;
 		}
+        b-card {
+            color: red;
+        }
 	</style>
   </head>
 
 <!-- https://bootstrap-vue.js.org/docs/components -->
   <body>
     <div id="app">
-      <b-container>
+      <b-container fluid>
         <b-row>
 	        <b-col>
 	        	<h1>English Boost</h1>
@@ -37,11 +40,40 @@
 	    </b-row>
         <b-row>
 	        <b-col>
-	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
+                <b-form-group>
+    	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
+                </b-form-group>
 
-	        	<p>{{ texts }}</p>
+                <b-card v-if="newDict">
+                    <b-form-group>
+                        <b-input v-model="newDict.name"></b-input>
+                        <b-input v-model="newDict.description" placeholder="description"></b-input>
+                    </b-form-group>
+                    <p class="card-text">Total words: {{ newDict.totalWordsCount }}</p>
+                    <p class="card-text">Uniq words:  {{ newDict.uniqWordsCount }}</p>
+                    <p class="card-text">80% words:   {{ newDict.Pareto }}</p>
+                    <b-button size="sm" variant="outline-secondary" @click="addDict">Add dictionary</b-button>
+                </b-card>
 	        </b-col>
-	        <b-col>2
+
+	        <b-col>
+                <div v-for="dict in dicts" v-if="seeDicts">
+                    <b-card :title="dict.name + ' (' + dict.uniqWordsCount + ')'">
+                        <p class="card-text">{{dict.description}}</p>
+                        <b-form-group>
+                            <b-progress class="mt-1" show-value>
+                                <b-progress-bar show-progress :value="60" variant="danger"></b-progress-bar>
+                                <b-progress-bar show-progress :value="30" variant="warning"></b-progress-bar>
+                                <b-progress-bar show-progress :value="10" variant="success"></b-progress-bar>
+                            </b-progress>
+                        </b-form-group>
+                        <b-form-group>
+                            <b-button size="sm" variant="outline-secondary" @click="explore">Explore</b-button>
+                        </b-form-group>
+                    </b-card>
+                </div>
+            </b-col>
+            <b-col>
 	        </b-col>
 	    </b-row>
       </b-container>
@@ -53,7 +85,11 @@
         data: {
 			textFile: null, // File object
 			text: null,
-			texts: []
+			newDict: null,
+            dicts: [],
+            learnDict: null,
+            knownDict: null,
+            seeDicts: true
         },
         watch: {
 			textFile: function() {
@@ -61,25 +97,75 @@
 					var reader = new FileReader();
 					reader.onload = function() {
 						app.text = reader.result;
-						app.texts.push( app.buildDictionary(app.text) );
+						app.newDict = app.buildDictionary(app.text, app.textFile.name);
 					};
 					reader.readAsText(app.textFile);
 				}
-				return [1,2,3];
 			},
-			texts: function() {
-				console.log(1);
-        		return [app.text];
-        	}
         },
         methods: {
-        	buildDictionary: function() {
-        		var words = app.text.split(/\W+/);
+            explore: function() {
+
+            },
+            addDict: function(event) {
+                this.dicts.push(this.newDict);
+                this.newDict = null;
+            },
+        	buildDictionary: function(text, name) {
+        		var words = text.split(/\W+/);
 				for (var i = 0; i < words.length - 1; i++) {
 				    words[i] += " ";
 				}
-        		return {phrases: [], words: words};
-        	}
+                var words = words.map(function(word){
+                    return word.toLowerCase().trim();
+                });
+                var words = words.filter(function(word){
+                    return word.length > 1;
+                });
+
+                var uniqWords = {};
+                for (var i = 0; i < words.length; i++) {
+                    var word = words[i];
+                    if (uniqWords.hasOwnProperty(word) ) {
+                        uniqWords[word]++;
+                    } else {
+                        uniqWords[word] = 1;
+                    }
+                }
+                var uniqCount = Object.keys(uniqWords).length;
+                var sortUniq = this.objectSort(uniqWords);
+                var paretoLimit = uniqCount*0.8;
+                var pareto = [];
+
+                var acc = 0;
+                for (var i = 0; i < sortUniq.length; i++) {
+                    pareto.push(sortUniq[i][0]);
+                    acc += sortUniq[i][1];
+                    if (acc > paretoLimit) {
+                        break;
+                    }
+                }
+
+        		return {
+                    phrases: [],
+                    totalWordsCount: words.length,
+                    uniqWordsCount: uniqCount,
+                    Pareto: pareto,
+                    uniqWords: sortUniq,
+                    name: name,
+                    description: '',
+                };
+        	},
+            objectSort: function(obj) {
+                var sortable = [];
+                for (var property in obj) {
+                    sortable.push([property, obj[property]]);
+                }
+                sortable.sort(function(a, b) {
+                    return b[1] - a[1];
+                });
+                return sortable;
+            }
         } 
       })
     </script>
