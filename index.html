@@ -16,16 +16,6 @@
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
     <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
-
-    <style type="text/css">
-		body {
-			font-family: Calibri;
-			font-size: 18px;
-		}
-        b-card {
-            color: red;
-        }
-	</style>
   </head>
 
 <!-- https://bootstrap-vue.js.org/docs/components -->
@@ -35,10 +25,32 @@
         <b-row>
 	        <b-col>
 	        	<h1>English Boost</h1>
-		    	<p>Boost English learning with customized dictionaries</p>
+		    	<p>Boost English learning with customized dictionaries (отмечать Парето слова в exploreMode)</p>
 	        </b-col>
 	    </b-row>
-        <b-row>
+
+        <template v-if="exploreMode">
+            <b-row>
+                <b-col>
+                    <b-button size="sm" variant="outline-secondary" @click="exploreDict(null)">Back</b-button>
+                    <div class="float-right">
+                        <b-check-group button-variant="outline-secondary" size="sm" buttons :options="sorts">
+                    </div>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col v-for="(wordColumn, index) in currentDict.getColumns()" :key="index">
+                    <words :batch="wordColumn"></words>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col>
+                    <b-button size="sm" variant="outline-secondary" @click="exploreDict(null)">Back</b-button>
+                </b-col>
+            </b-row>
+        </template>
+
+        <b-row v-if="!exploreMode">
 	        <b-col>
                 <b-form-group>
     	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
@@ -50,46 +62,129 @@
                         <b-input v-model="newDict.description" placeholder="description"></b-input>
                     </b-form-group>
                     <p class="card-text">Total words: {{ newDict.totalWordsCount }}</p>
-                    <p class="card-text">Uniq words:  {{ newDict.uniqWordsCount }}</p>
-                    <p class="card-text">80% words:   {{ newDict.Pareto }}</p>
+                    <p class="card-text">Uniq words:  {{ newDict.uniqWords.length }}</p>
                     <b-button size="sm" variant="outline-secondary" @click="addDict">Add dictionary</b-button>
                 </b-card>
 	        </b-col>
 
 	        <b-col>
-                <div v-for="dict in dicts" v-if="seeDicts">
-                    <b-card :title="dict.name + ' (' + dict.uniqWordsCount + ')'">
+                <b>Library</b>
+                <div v-for="dict in dicts" v-if="!exploreMode">
+                    <b-card :title="dict.name + ' (' + dict.uniqWords.length + ')'">
                         <p class="card-text">{{dict.description}}</p>
                         <b-form-group>
                             <b-progress class="mt-1" show-value>
-                                <b-progress-bar show-progress :value="60" variant="danger"></b-progress-bar>
-                                <b-progress-bar show-progress :value="30" variant="warning"></b-progress-bar>
-                                <b-progress-bar show-progress :value="10" variant="success"></b-progress-bar>
+                                <b-progress-bar show-progress :value="100" variant="danger"></b-progress-bar>
                             </b-progress>
                         </b-form-group>
                         <b-form-group>
-                            <b-button size="sm" variant="outline-secondary" @click="explore">Explore</b-button>
+                            <b-button size="sm" variant="outline-secondary" @click="exploreDict(dict)">Explore</b-button>
+                            <b-button size="sm" variant="outline-danger" @click="deleteDict(dict)">Delete</b-button>
                         </b-form-group>
                     </b-card>
                 </div>
             </b-col>
+
             <b-col>
+                <b>Common dictionaries</b>
+                <b-card :title="unknownDict.name + ' (' + unknownDict.uniqWords.length + ')'">
+                    <p class="card-text">{{unknownDict.description}}</p>
+                    <b-form-group>
+                        <b-progress class="mt-1" show-value>
+                            <b-progress-bar show-progress :value="100" variant="danger"></b-progress-bar>
+                        </b-progress>
+                    </b-form-group>
+                    <b-form-group>
+                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(unknownDict)">Explore</b-button>
+                    </b-form-group>
+                </b-card>
+
+                <b-card :title="learnDict.name + ' (' + learnDict.uniqWords.length + ')'">
+                    <p class="card-text">{{learnDict.description}}</p>
+                    <b-form-group>
+                        <b-progress class="mt-1" show-value>
+                            <b-progress-bar show-progress :value="100" variant="warning"></b-progress-bar>
+                        </b-progress>
+                    </b-form-group>
+                    <b-form-group>
+                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(learnDict)">Explore</b-button>
+                    </b-form-group>
+                </b-card>
+
+                <b-card :title="knownDict.name + ' (' + knownDict.uniqWords.length + ')'">
+                    <p class="card-text">{{knownDict.description}}</p>
+                    <b-form-group>
+                        <b-progress class="mt-1" show-value>
+                            <b-progress-bar show-progress :value="100" variant="success"></b-progress-bar>
+                        </b-progress>
+                    </b-form-group>
+                    <b-form-group>
+                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(knownDict)">Explore</b-button>
+                    </b-form-group>
+                </b-card>
+
+                <b-card :title="stopwordDict.name + ' (' + stopwordDict.uniqWords.length + ')'">
+                    <p class="card-text">{{stopwordDict.description}}</p>
+                    <b-form-group>
+                        <b-progress class="mt-1" show-value>
+                            <b-progress-bar show-progress :value="100" variant="info"></b-progress-bar>
+                        </b-progress>
+                    </b-form-group>
+                    <b-form-group>
+                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(stopwordDict)">Explore</b-button>
+                    </b-form-group>
+                </b-card>
 	        </b-col>
 	    </b-row>
       </b-container>
     </div>
 
     <script>
-      window.app = new Vue({
+    window.app = new Vue({
         el: "#app",
         data: {
 			textFile: null, // File object
 			text: null,
-			newDict: null,
             dicts: [],
-            learnDict: null,
-            knownDict: null,
-            seeDicts: true
+
+            newDict: null,
+            unknownDict: {
+                phrases: [],
+                uniqWords: [],
+                name: 'unknown',
+                description: 'Что не знаю',
+            },
+            learnDict: {
+                phrases: [],
+                uniqWords: [],
+                name: 'learn',
+                description: 'Что учу',
+            },
+            knownDict: {
+                phrases: [],
+                uniqWords: [],
+                name: 'known',
+                description: 'Что знаю',
+            },
+            stopwordDict: {
+                phrases: [],
+                uniqWords: [],
+                name: 'stopwords',
+                description: 'НЕ существительные/глаголы/прилагательные',
+            },
+            currentDict: null,
+
+            exploreMode: false,
+            options: [
+                { text: 'Unknown', value: 1 },
+                { text: 'Learning', value: 2 },
+                { text: 'Known', value: 3 },
+            ],
+            sorts: [
+                { text: 'Sort by frequency', value: 1 },
+                { text: 'Sort by alphabet', value: 2 },
+                { text: 'Sort by type', value: 3 },
+            ]
         },
         watch: {
 			textFile: function() {
@@ -104,11 +199,20 @@
 			},
         },
         methods: {
-            explore: function() {
-
+            deleteDict: function(dict) {
+                this.dicts = this.dicts.filter(function(item) {
+                    return item.name != dict.name;
+                });
+            },
+            exploreDict: function(dict) {
+                this.currentDict = dict;
+                this.exploreMode = !this.exploreMode;
             },
             addDict: function(event) {
                 this.dicts.push(this.newDict);
+
+                this.unknownDict.uniqWords = this.newDict.uniqWords;
+
                 this.newDict = null;
             },
         	buildDictionary: function(text, name) {
@@ -132,9 +236,8 @@
                         uniqWords[word] = 1;
                     }
                 }
-                var uniqCount = Object.keys(uniqWords).length;
                 var sortUniq = this.objectSort(uniqWords);
-                var paretoLimit = uniqCount*0.8;
+                var paretoLimit = sortUniq.length*0.8;
                 var pareto = [];
 
                 var acc = 0;
@@ -149,11 +252,26 @@
         		return {
                     phrases: [],
                     totalWordsCount: words.length,
-                    uniqWordsCount: uniqCount,
                     Pareto: pareto,
                     uniqWords: sortUniq,
                     name: name,
                     description: '',
+                    getColumns: function() {
+                        var columnCount = 8;
+                        var wordsInColumn = Math.ceil(this.uniqWords.length / (columnCount));
+
+                        var batches = [];
+                        var batch = [];
+                        for (var i = 0; i < this.uniqWords.length; i++) {
+                            batch.push(this.uniqWords[i]);
+                            if ((i+1) % wordsInColumn == 0) {
+                                batches.push(batch);
+                                batch = [];
+                            }
+                        }
+                        batches.push(batch);
+                        return batches;
+                    }
                 };
         	},
             objectSort: function(obj) {
@@ -166,8 +284,54 @@
                 });
                 return sortable;
             }
-        } 
-      })
+        },
+        mounted: function () {
+            this.$root.$on('toggleStateWord', function (data) {
+                console.log(data);
+            })
+        }
+    });
+
+    Vue.component('words', {
+        props: ['batch'],
+        data: function() {
+            return {
+                states: [
+                    {name: 'unknown', style: ''},
+                    {name: 'learn', style: 'background-color: #ffc107;'},
+                    {name: 'known', style: 'background-color: #28a745;'}
+                ]
+            }
+        },
+        template: '\
+            <div>\
+                <div v-for="word in batch">\
+                    <p state="unknown" @click="toggle">{{ word[0] }}</p>\
+                </div>\
+            </div>',
+        methods: {
+            toggle: function(event) {
+                var word = event.target.textContent;
+                var state = event.target.attributes.state.nodeValue;
+
+                var newState = null;
+                for (var i = 0; i < this.states.length; i++) {
+                    if (this.states[i].name == state) {
+                        newState = this.states[(i + 1) % this.states.length];
+                    }
+                }
+
+                console.log(word);
+                console.log(state);
+                console.log(newState);
+
+                event.target.attributes.state.nodeValue = newState.name;
+                event.target.style = newState.style;
+
+                this.$root.$emit('toggleStateWord', {word: word, state: newState.name});
+            }
+        }
+    });
     </script>
 
   </body>
