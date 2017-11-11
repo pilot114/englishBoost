@@ -25,7 +25,7 @@
         <b-row>
 	        <b-col>
 	        	<h1>English Boost</h1>
-		    	<p>Boost English learning with customized dictionaries (отмечать Парето слова в exploreMode)</p>
+		    	<p>Boost English learning with customized dictionaries (отмечать Парето слова в exploreMode, загружать в explore пачками по 200 слов)</p>
 	        </b-col>
 	    </b-row>
 
@@ -63,7 +63,8 @@
                     </b-form-group>
                     <p class="card-text">Total words: {{ newDict.totalWordsCount }}</p>
                     <p class="card-text">Uniq words:  {{ newDict.uniqWords.length }}</p>
-                    <b-button size="sm" variant="outline-secondary" @click="addDict">Add dictionary</b-button>
+                    <p class="card-text">Из них будет добавлено тудато и тудато...</p>
+                    <b-button size="sm" variant="outline-secondary" @click="addDict">Add to library</b-button>
                 </b-card>
 	        </b-col>
 
@@ -140,6 +141,47 @@
     </div>
 
     <script>
+    Vue.component('words', {
+        props: ['batch'],
+        data: function() {
+            return {
+                states: [
+                    {name: 'unknown', style: ''},
+                    {name: 'learn', style: 'background-color: #ffc107;'},
+                    {name: 'known', style: 'background-color: #28a745;'}
+                ]
+            }
+        },
+        template: '\
+            <div>\
+                <div v-for="word in batch">\
+                    <p state="unknown" @click="toggle">{{ word[0] }}</p>\
+                </div>\
+            </div>',
+        methods: {
+            toggle: function(event) {
+                var word = event.target.textContent;
+                var state = event.target.attributes.state.nodeValue;
+
+                var newState = null;
+                for (var i = 0; i < this.states.length; i++) {
+                    if (this.states[i].name == state) {
+                        newState = this.states[(i + 1) % this.states.length];
+                    }
+                }
+
+                console.log(word);
+                console.log(state);
+                console.log(newState);
+
+                event.target.attributes.state.nodeValue = newState.name;
+                event.target.style = newState.style;
+
+                this.$root.$emit('toggleStateWord', {word: word, state: newState.name});
+            }
+        }
+    });
+
     window.app = new Vue({
         el: "#app",
         data: {
@@ -158,7 +200,7 @@
                 phrases: [],
                 uniqWords: [],
                 name: 'learn',
-                description: 'Что учу',
+                description: 'Что изучить',
             },
             knownDict: {
                 phrases: [],
@@ -211,7 +253,7 @@
             addDict: function(event) {
                 this.dicts.push(this.newDict);
 
-                this.unknownDict.uniqWords = this.newDict.uniqWords;
+                this.unknownDict.uniqWords = this.unknownDict.uniqWords.concat(this.newDict.uniqWords);
 
                 this.newDict = null;
             },
@@ -289,47 +331,6 @@
             this.$root.$on('toggleStateWord', function (data) {
                 console.log(data);
             })
-        }
-    });
-
-    Vue.component('words', {
-        props: ['batch'],
-        data: function() {
-            return {
-                states: [
-                    {name: 'unknown', style: ''},
-                    {name: 'learn', style: 'background-color: #ffc107;'},
-                    {name: 'known', style: 'background-color: #28a745;'}
-                ]
-            }
-        },
-        template: '\
-            <div>\
-                <div v-for="word in batch">\
-                    <p state="unknown" @click="toggle">{{ word[0] }}</p>\
-                </div>\
-            </div>',
-        methods: {
-            toggle: function(event) {
-                var word = event.target.textContent;
-                var state = event.target.attributes.state.nodeValue;
-
-                var newState = null;
-                for (var i = 0; i < this.states.length; i++) {
-                    if (this.states[i].name == state) {
-                        newState = this.states[(i + 1) % this.states.length];
-                    }
-                }
-
-                console.log(word);
-                console.log(state);
-                console.log(newState);
-
-                event.target.attributes.state.nodeValue = newState.name;
-                event.target.style = newState.style;
-
-                this.$root.$emit('toggleStateWord', {word: word, state: newState.name});
-            }
         }
     });
     </script>
