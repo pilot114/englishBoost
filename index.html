@@ -170,14 +170,10 @@
                     }
                 }
 
-                console.log(word);
-                console.log(state);
-                console.log(newState);
-
                 event.target.attributes.state.nodeValue = newState.name;
                 event.target.style = newState.style;
 
-                this.$root.$emit('toggleStateWord', {word: word, state: newState.name});
+                this.$root.$emit('toggleStateWord', {word: word, oldState:state, newState: newState.name});
             }
         }
     });
@@ -329,8 +325,14 @@
         },
         mounted: function () {
             this.$root.$on('toggleStateWord', function (data) {
-                console.log(data);
-            })
+                var fromDict = data.oldState + 'Dict';
+                var toDict = data.newState + 'Dict';
+
+                this[fromDict].uniqWords = this[fromDict].uniqWords.filter(function(word){
+                    return word != data.word;
+                });
+                this[toDict].uniqWords.push(data.word);
+            });
         }
     });
     </script>
