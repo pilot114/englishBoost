@@ -32,20 +32,20 @@
         <template v-if="exploreMode">
             <b-row>
                 <b-col>
-                    <b-button size="sm" variant="outline-secondary" @click="exploreDict(null)">Back</b-button>
+                    <b-button size="sm" variant="outline-secondary" @click="exploreBook(null)">Back</b-button>
                     <div class="float-right">
                         <b-check-group button-variant="outline-secondary" size="sm" buttons :options="sorts">
                     </div>
                 </b-col>
             </b-row>
             <b-row>
-                <b-col v-for="(wordColumn, index) in currentDict.getColumns()" :key="index">
+                <b-col v-for="(wordColumn, index) in currentBook.getColumns(8)" :key="index">
                     <words :batch="wordColumn"></words>
                 </b-col>
             </b-row>
             <b-row>
                 <b-col>
-                    <b-button size="sm" variant="outline-secondary" @click="exploreDict(null)">Back</b-button>
+                    <b-button size="sm" variant="outline-secondary" @click="exploreBook(null)">Back</b-button>
                 </b-col>
             </b-row>
         </template>
@@ -56,31 +56,31 @@
     	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
                 </b-form-group>
 
-                <b-card v-if="newDict">
+                <b-card v-if="newBook">
                     <b-form-group>
-                        <b-input v-model="newDict.name"></b-input>
-                        <b-input v-model="newDict.description" placeholder="description"></b-input>
+                        <b-input v-model="newBook.title"></b-input>
+                        <b-input v-model="newBook.description" placeholder="description"></b-input>
                     </b-form-group>
-                    <p class="card-text">Total words: {{ newDict.totalWordsCount }}</p>
-                    <p class="card-text">Uniq words:  {{ newDict.uniqWords.length }}</p>
+                    <p class="card-text">Total words: {{ newBook.totalWordCount }}</p>
+                    <p class="card-text">Uniq words:  {{ newBook.words.length }}</p>
                     <p class="card-text">Из них будет добавлено тудато и тудато...</p>
-                    <b-button size="sm" variant="outline-secondary" @click="addDict">Add to library</b-button>
+                    <b-button size="sm" variant="outline-secondary" @click="addBook">Add to library</b-button>
                 </b-card>
 	        </b-col>
 
 	        <b-col>
                 <b>Library</b>
-                <div v-for="dict in dicts" v-if="!exploreMode">
-                    <b-card :title="dict.name + ' (' + dict.uniqWords.length + ')'">
-                        <p class="card-text">{{dict.description}}</p>
+                <div v-for="book in books" v-if="!exploreMode">
+                    <b-card :title="book.title + ' (' + book.words.length + ')'">
+                        <p class="card-text">{{book.description}}</p>
                         <b-form-group>
                             <b-progress class="mt-1" show-value>
                                 <b-progress-bar show-progress :value="100" variant="danger"></b-progress-bar>
                             </b-progress>
                         </b-form-group>
                         <b-form-group>
-                            <b-button size="sm" variant="outline-secondary" @click="exploreDict(dict)">Explore</b-button>
-                            <b-button size="sm" variant="outline-danger" @click="deleteDict(dict)">Delete</b-button>
+                            <b-button size="sm" variant="outline-secondary" @click="exploreBook(book)">Explore</b-button>
+                            <b-button size="sm" variant="outline-danger" @click="deleteBook(book)">Delete</b-button>
                         </b-form-group>
                     </b-card>
                 </div>
@@ -88,51 +88,15 @@
 
             <b-col>
                 <b>Common dictionaries</b>
-                <b-card :title="unknownDict.name + ' (' + unknownDict.uniqWords.length + ')'">
-                    <p class="card-text">{{unknownDict.description}}</p>
+                <b-card  v-for="(dict, dictName) in dicts" :key="dictName" :title="dict.type + ' (' + dict.words.length + ')'">
+                    <p class="card-text">{{dict.description}}</p>
                     <b-form-group>
                         <b-progress class="mt-1" show-value>
-                            <b-progress-bar show-progress :value="100" variant="danger"></b-progress-bar>
+                            <b-progress-bar show-progress :value="100" :variant=dict.variant></b-progress-bar>
                         </b-progress>
                     </b-form-group>
                     <b-form-group>
-                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(unknownDict)">Explore</b-button>
-                    </b-form-group>
-                </b-card>
-
-                <b-card :title="learnDict.name + ' (' + learnDict.uniqWords.length + ')'">
-                    <p class="card-text">{{learnDict.description}}</p>
-                    <b-form-group>
-                        <b-progress class="mt-1" show-value>
-                            <b-progress-bar show-progress :value="100" variant="warning"></b-progress-bar>
-                        </b-progress>
-                    </b-form-group>
-                    <b-form-group>
-                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(learnDict)">Explore</b-button>
-                    </b-form-group>
-                </b-card>
-
-                <b-card :title="knownDict.name + ' (' + knownDict.uniqWords.length + ')'">
-                    <p class="card-text">{{knownDict.description}}</p>
-                    <b-form-group>
-                        <b-progress class="mt-1" show-value>
-                            <b-progress-bar show-progress :value="100" variant="success"></b-progress-bar>
-                        </b-progress>
-                    </b-form-group>
-                    <b-form-group>
-                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(knownDict)">Explore</b-button>
-                    </b-form-group>
-                </b-card>
-
-                <b-card :title="stopwordDict.name + ' (' + stopwordDict.uniqWords.length + ')'">
-                    <p class="card-text">{{stopwordDict.description}}</p>
-                    <b-form-group>
-                        <b-progress class="mt-1" show-value>
-                            <b-progress-bar show-progress :value="100" variant="info"></b-progress-bar>
-                        </b-progress>
-                    </b-form-group>
-                    <b-form-group>
-                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(stopwordDict)">Explore</b-button>
+                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(dict)">Explore</b-button>
                     </b-form-group>
                 </b-card>
 	        </b-col>
@@ -141,6 +105,93 @@
     </div>
 
     <script>
+
+    function Dictionary(words, type, variant, description) {
+        this.words = words;
+        this.type = type;
+        this.variant = variant;
+        this.description = description;
+    }
+
+    function Book(text, title, description = null) {
+        this.phrases = [];
+        this.totalWordCount = 0;
+        this.words = [];
+        this.pareto = [];
+        this.paretoLimit = 0.8;
+        this.title = title;
+        this.description = description;
+
+        this.objectSort = function(obj) {
+            var sortable = [];
+            for (var property in obj) {
+                sortable.push([property, obj[property]]);
+            }
+            sortable.sort(function(a, b) {
+                return b[1] - a[1];
+            });
+            return sortable;
+        }
+
+        this.getColumns = function(columnCount) {
+            var wordsInColumn = Math.ceil(this.words.length / (columnCount));
+
+            var batches = [];
+            var batch = [];
+            for (var i = 0; i < this.words.length; i++) {
+                batch.push(this.words[i]);
+                if ((i+1) % wordsInColumn == 0) {
+                    batches.push(batch);
+                    batch = [];
+                }
+            }
+            batches.push(batch);
+            return batches;
+        }
+
+        // set type for each word
+        this.markWords = function(dict) {
+            var type = dict.type;
+        }
+
+        this.phrases = text.split(/[.!?]/).filter(function(phrase){
+            return phrase.length > 0;
+        });
+
+        var words = text.split(/(\s+)/);
+        for (var i = 0; i < words.length - 1; i++) {
+            words[i] += " ";
+        }
+        this.totalWordCount = words.length;
+
+        words = words.map(function(word){
+            // left+right smart trim
+            return word.toLowerCase().replace(/^\W+/, '').replace(/\W+$/, '');
+        }).filter(function(word){
+            return word.length > 0;
+        });
+
+        var uniqWords = {};
+        for (var i = 0; i < words.length; i++) {
+            var word = words[i];
+            if (uniqWords.hasOwnProperty(word) ) {
+                uniqWords[word]++;
+            } else {
+                uniqWords[word] = 1;
+            }
+        }
+        this.words = this.objectSort(uniqWords);
+
+        var acc = 0;
+        for (var i = 0; i < this.words.length; i++) {
+            this.pareto.push(this.words[i][0]);
+            acc += this.words[i][1];
+            if (acc > this.words.length * this.paretoLimit) {
+                break;
+            }
+        }
+    }
+
     Vue.component('words', {
         props: ['batch'],
         data: function() {
@@ -183,41 +234,20 @@
         data: {
 			textFile: null, // File object
 			text: null,
-            dicts: [],
+            newBook: null,
 
-            newDict: null,
-            unknownDict: {
-                phrases: [],
-                uniqWords: [],
-                name: 'unknown',
-                description: 'Что не знаю',
-            },
-            learnDict: {
-                phrases: [],
-                uniqWords: [],
-                name: 'learn',
-                description: 'Что изучить',
-            },
-            knownDict: {
-                phrases: [],
-                uniqWords: [],
-                name: 'known',
-                description: 'Что знаю',
-            },
-            stopwordDict: {
-                phrases: [],
-                uniqWords: [],
-                name: 'stopwords',
-                description: 'НЕ существительные/глаголы/прилагательные',
-            },
-            currentDict: null,
+            books: [],
 
+            dicts: {
+                unknown:  new Dictionary([], 'unknown', 'danger', 'Что не знаю'),
+                learn:    new Dictionary([], 'learn', 'warning',  'Что изучить'),
+                known:    new Dictionary([], 'known', 'success',  'Что знаю'),
+                stopword: new Dictionary([], 'stopwords', 'info', 'НЕ существительные/глаголы/прилагательные'),
+            },
+
+            currentBook: null,
             exploreMode: false,
-            options: [
-                { text: 'Unknown', value: 1 },
-                { text: 'Learning', value: 2 },
-                { text: 'Known', value: 3 },
-            ],
+
             sorts: [
                 { text: 'Sort by frequency', value: 1 },
                 { text: 'Sort by alphabet', value: 2 },
@@ -230,108 +260,40 @@
 					var reader = new FileReader();
 					reader.onload = function() {
 						app.text = reader.result;
-						app.newDict = app.buildDictionary(app.text, app.textFile.name);
+						app.newBook = new Book(app.text, app.textFile.name);
 					};
 					reader.readAsText(app.textFile);
 				}
 			},
         },
         methods: {
-            deleteDict: function(dict) {
-                this.dicts = this.dicts.filter(function(item) {
-                    return item.name != dict.name;
+            addBook: function(event) {
+                this.books.push(this.newBook);
+                this.dicts.unknown.words = this.dicts.unknown.words.concat(this.newBook.words);
+                this.newBook = null;
+            },
+            parseBook: function(book) {
+                alert("TODO");
+            },
+            deleteBook: function(book) {
+                this.books = this.books.filter(function(item) {
+                    return item.name != book.name;
                 });
             },
-            exploreDict: function(dict) {
-                this.currentDict = dict;
+            exploreBook: function(book) {
+                this.currentBook = book;
                 this.exploreMode = !this.exploreMode;
             },
-            addDict: function(event) {
-                this.dicts.push(this.newDict);
-
-                this.unknownDict.uniqWords = this.unknownDict.uniqWords.concat(this.newDict.uniqWords);
-
-                this.newDict = null;
+            exploreDict: function(dict) {
+                alert("TODO");
             },
-        	buildDictionary: function(text, name) {
-        		var words = text.split(/\W+/);
-				for (var i = 0; i < words.length - 1; i++) {
-				    words[i] += " ";
-				}
-                var words = words.map(function(word){
-                    return word.toLowerCase().trim();
-                });
-                var words = words.filter(function(word){
-                    return word.length > 1;
-                });
-
-                var uniqWords = {};
-                for (var i = 0; i < words.length; i++) {
-                    var word = words[i];
-                    if (uniqWords.hasOwnProperty(word) ) {
-                        uniqWords[word]++;
-                    } else {
-                        uniqWords[word] = 1;
-                    }
-                }
-                var sortUniq = this.objectSort(uniqWords);
-                var paretoLimit = sortUniq.length*0.8;
-                var pareto = [];
-
-                var acc = 0;
-                for (var i = 0; i < sortUniq.length; i++) {
-                    pareto.push(sortUniq[i][0]);
-                    acc += sortUniq[i][1];
-                    if (acc > paretoLimit) {
-                        break;
-                    }
-                }
-
-        		return {
-                    phrases: [],
-                    totalWordsCount: words.length,
-                    Pareto: pareto,
-                    uniqWords: sortUniq,
-                    name: name,
-                    description: '',
-                    getColumns: function() {
-                        var columnCount = 8;
-                        var wordsInColumn = Math.ceil(this.uniqWords.length / (columnCount));
-
-                        var batches = [];
-                        var batch = [];
-                        for (var i = 0; i < this.uniqWords.length; i++) {
-                            batch.push(this.uniqWords[i]);
-                            if ((i+1) % wordsInColumn == 0) {
-                                batches.push(batch);
-                                batch = [];
-                            }
-                        }
-                        batches.push(batch);
-                        return batches;
-                    }
-                };
-        	},
-            objectSort: function(obj) {
-                var sortable = [];
-                for (var property in obj) {
-                    sortable.push([property, obj[property]]);
-                }
-                sortable.sort(function(a, b) {
-                    return b[1] - a[1];
-                });
-                return sortable;
-            }
         },
         mounted: function () {
             this.$root.$on('toggleStateWord', function (data) {
-                var fromDict = data.oldState + 'Dict';
-                var toDict = data.newState + 'Dict';
-
-                this[fromDict].uniqWords = this[fromDict].uniqWords.filter(function(word){
+                this.dicts[data.oldState].words = this.dicts[data.oldState].words.filter(function(word){
                     return word != data.word;
                 });
-                this[toDict].uniqWords.push(data.word);
+                this.dicts[data.newState].words.push(data.word);
             });
         }
     });
