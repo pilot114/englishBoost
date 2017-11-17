@@ -25,7 +25,7 @@
         <b-row>
 	        <b-col>
 	        	<h1>English Boost</h1>
-		    	<p>Boost English learning with customized dictionaries (отмечать Парето слова в exploreMode, загружать в explore пачками по 200 слов)</p>
+		    	<p>Boost English learning with customized dictionaries (отмечать Парето слова в exploreMode)</p>
 	        </b-col>
 	    </b-row>
 
@@ -39,7 +39,14 @@
                 </b-col>
             </b-row>
             <b-row>
-                <b-col v-for="(wordColumn, index) in currentBook.getColumns(8)" :key="index">
+                <b-col>
+                    <b-pagination-nav align="center" base-url="#"
+                      :number-of-pages="Math.ceil(currentBook.words.length/200)"
+                      v-model="currentPage" />
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col v-for="(wordColumn, index) in currentBook.getPage(currentPage, 8)" :key="index">
                     <words :batch="wordColumn"></words>
                 </b-col>
             </b-row>
@@ -133,13 +140,16 @@
             return sortable;
         }
 
-        this.getColumns = function(columnCount) {
-            var wordsInColumn = Math.ceil(this.words.length / (columnCount));
+        this.getPage = function(page, columnCount) {
+            var wordsInPage = Math.ceil(this.words.length / page) * 200;
+            var page = this.words.slice((page-1)*200, page*200);
+
+            var wordsInColumn = Math.ceil(page.length / (columnCount));
 
             var batches = [];
             var batch = [];
-            for (var i = 0; i < this.words.length; i++) {
-                batch.push(this.words[i]);
+            for (var i = 0; i < page.length; i++) {
+                batch.push(page[i]);
                 if ((i+1) % wordsInColumn == 0) {
                     batches.push(batch);
                     batch = [];
@@ -247,6 +257,7 @@
 
             currentBook: null,
             exploreMode: false,
+            currentPage: 1,
 
             sorts: [
                 { text: 'Sort by frequency', value: 1 },
@@ -277,7 +288,7 @@
             },
             deleteBook: function(book) {
                 this.books = this.books.filter(function(item) {
-                    return item.name != book.name;
+                    return item.title != book.title;
                 });
             },
             exploreBook: function(book) {
