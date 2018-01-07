@@ -16,12 +16,18 @@
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
     <script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+
+    <style type="text/css">
+        [v-cloak] {
+          display: none;
+        }
+    </style>
   </head>
 
 <!-- https://bootstrap-vue.js.org/docs/components -->
   <body>
     <div id="app">
-      <b-container fluid>
+      <b-container fluid v-cloak>
         <b-row>
 	        <b-col>
 	        	<h1>English Boost</h1>
@@ -31,6 +37,34 @@
                 </b-form-group>
 	        </b-col>
 	    </b-row>
+
+        <template v-if="trainingMode">
+            <b-row>
+                <b-col>
+                    <b-button size="sm" variant="outline-secondary" @click="trainingDict(null)">Back</b-button>
+                    <div class="float-right">
+                        <b-check-group button-variant="outline-secondary" size="sm" buttons :options="sorts">
+                    </div>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col>
+                    <b-pagination-nav align="center" base-url="#"
+                      :number-of-pages="Math.ceil(currentDict.words.length/200)"
+                      v-model="currentPage" />
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col v-for="(wordColumn, index) in currentDict.getPage(currentPage, 8)" :key="index">
+                    <p v-for="word in wordColumn"> {{word}} </p>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col>
+                    <b-button size="sm" variant="outline-secondary" @click="trainingDict(null)">Back</b-button>
+                </b-col>
+            </b-row>
+        </template>
 
         <template v-if="exploreMode">
             <b-row>
@@ -60,7 +94,7 @@
             </b-row>
         </template>
 
-        <b-row v-if="!exploreMode">
+        <b-row v-if="!exploreMode && !trainingMode">
 	        <b-col>
                 <b-form-group>
     	        	<b-file accept="text/*" id="file_input" v-model="textFile"></b-file>
@@ -113,7 +147,7 @@
                         </b-progress>
                     </b-form-group>
                     <b-form-group>
-                        <b-button size="sm" variant="outline-secondary" @click="exploreDict(dict)">Explore</b-button>
+                        <b-button size="sm" variant="outline-secondary" @click="trainingDict(dict)">Training</b-button>
                     </b-form-group>
                 </b-card>
 	        </b-col>
@@ -129,7 +163,7 @@
             'a', 'an', 'the',
             // pronouns
             'all', 'another', 'any', 'anybody', 'anyone', 'anything', 'both',
-            'each', 'other', 'either', 'everybody', 'everyone', 'everything',
+            'each', 'either', 'everybody', 'everyone', 'everything',
             'few', 'he', 'her', 'hers', 'herself', 'him', 'himself', 'his',
             'i', 'it', 'its', 'itself', 'many', 'me', 'mine', 'more', 'most', 'much', 'my', 'myself',
             'neither', 'nobody', 'none', 'nothingone', 'other', 'others', 'our', 'ours' ,
@@ -183,6 +217,25 @@
         this.type = type;
         this.variant = variant;
         this.description = description;
+
+        this.getPage = function(page, columnCount) {
+            var wordsInPage = Math.ceil(this.words.length / page) * 200;
+            var page = this.words.slice((page-1)*200, page*200);
+
+            var wordsInColumn = Math.ceil(page.length / (columnCount));
+
+            var batches = [];
+            var batch = [];
+            for (var i = 0; i < page.length; i++) {
+                batch.push(page[i]);
+                if ((i+1) % wordsInColumn == 0) {
+                    batches.push(batch);
+                    batch = [];
+                }
+            }
+            batches.push(batch);
+            return batches;
+        }
     }
 
     function Book(text, title, description) {
@@ -334,6 +387,8 @@
     window.app = new Vue({
         el: "#app",
         data: {
+            loaded: false,
+
 			textFile: null, // File object
 			text: null,
             newBook: null,
@@ -348,7 +403,9 @@
             },
 
             currentBook: null,
+            currentDict: null,
             exploreMode: false,
+            trainingMode: false,
             currentPage: 1,
 
             sorts: [
@@ -471,8 +528,9 @@
                 this.currentBook = book;
                 this.exploreMode = !this.exploreMode;
             },
-            exploreDict: function(dict) {
-                alert("TODO");
+            trainingDict: function(dict) {
+                this.currentDict = dict;
+                this.trainingMode = !this.trainingMode;
             },
         },
         mounted: function () {
