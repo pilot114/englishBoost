@@ -10,7 +10,7 @@
     export default {
         name: "Words",
         props: ['batch'],
-        data: function () {
+        data() {
             return {
                 unknown: {backgroundColor: '#ffffff'},
                 learn: {backgroundColor: '#ffc107'},
@@ -18,10 +18,10 @@
             }
         },
         methods: {
-            styleSelect: function (word) {
+            styleSelect(word) {
                 return this[word[2]];
             },
-            toggle: function (event) {
+            toggle(event) {
                 let word = event.target.textContent;
                 let state = event.target.attributes.state.nodeValue;
                 let newState = null;

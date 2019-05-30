@@ -41,16 +41,16 @@
             return {
                 currentPage: 1,
                 sorts: [
-                    { text: 'Sort by frequency', value: 1 },
-                    { text: 'Sort by alphabet', value: 2 },
-                    { text: 'Sort by type', value: 3 },
+                    {text: 'Sort by frequency', value: 1},
+                    {text: 'Sort by alphabet', value: 2},
+                    {text: 'Sort by type', value: 3},
                 ]
             }
         },
         methods: {
             getPage(dictionary, index, columnCount) {
                 let wordsInPage = Math.ceil(dictionary.words.length / index) * 200;
-                let page = dictionary.words.slice((index-1)*200, index*200);
+                let page = dictionary.words.slice((index - 1) * 200, index * 200);
 
                 let wordsInColumn = Math.ceil(page.length / (columnCount));
 
@@ -58,7 +58,7 @@
                 let batch = [];
                 for (let i = 0; i < page.length; i++) {
                     batch.push(page[i]);
-                    if ((i+1) % wordsInColumn === 0) {
+                    if ((i + 1) % wordsInColumn === 0) {
                         batches.push(batch);
                         batch = [];
                     }
