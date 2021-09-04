@@ -1,72 +1,26 @@
 <template>
     <div id="app">
-        <b-container fluid v-cloak>
-            <b-row>
-                <b-col>
-                    <h1>English Boost v1.0</h1>
+        <EnglishBoost v-if="mode === 'englishBoost'" @back="mode = null"/>
+        <Russian v-else-if="mode === 'russian'" @back="mode = null"/>
 
-                    <b-form-group>
-                        <b-button size="sm" variant="outline-secondary" @click="clearState">Clear storage</b-button>
-                    </b-form-group>
-                </b-col>
-            </b-row>
-
-            <ExploreMode
-                    v-if="exploreMode"
-                    :book="currentBook"
-                    @closeExplore="exploreMode = !exploreMode"
-            ></ExploreMode>
-
-            <TrainingMode
-                    v-if="trainingMode"
-                    :dictionary="currentDict"
-                    @closeTraining="trainingMode = !trainingMode"
-            ></TrainingMode>
-
-            <Dashboard
-                    v-if="!exploreMode && !trainingMode"
-                    @explore=exploreBook
-                    @training=trainingDict
-            ></Dashboard>
-        </b-container>
+        <b-jumbotron v-else header="Выбери режим словаря">
+            <b-button @click="mode = 'englishBoost'">English</b-button>
+            <b-button @click="mode = 'russian'">Russian</b-button>
+        </b-jumbotron>
     </div>
 </template>
 
 <script>
-    import TrainingMode from './components/TrainingMode.vue'
-    import ExploreMode from './components/ExploreMode.vue'
-    import Dashboard from './components/Dashboard.vue'
+    import EnglishBoost from "./components/EnglishBoost";
+    import Russian from "./components/Russian";
 
     export default {
         name: 'app',
-        components: {TrainingMode, ExploreMode, Dashboard},
+        components: { EnglishBoost, Russian },
         data() {
             return {
-                trainingMode: false,
-                exploreMode: false,
-                currentBook: null,
-                currentDict: null,
+                mode: null
             }
-        },
-        methods: {
-            clearState() {
-                localStorage.clear();
-                alert('localStorage clear');
-            },
-            exploreBook(book) {
-                this.currentBook = book;
-                this.exploreMode = !this.exploreMode;
-            },
-            trainingDict(dict) {
-                this.currentDict = dict;
-                this.trainingMode = !this.trainingMode;
-            },
         }
     }
 </script>
-
-<style>
-    [v-cloak] {
-        display: none;
-    }
-</style>
