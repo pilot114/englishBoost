@@ -1,12 +1,13 @@
 # english boost
 
-vue ui -H 0.0.0.0
+pet-проект для удобного изучения английского языка.  
 
-8080 - для UI
-8000 - dev сервер
+- возможность формирования собственного словаря из произвольных текстов
+- повторение изученных слов по интервальной системе
+- порядок изучения определяется частотностью слова
 
-# TODO
+# стек
 
-Для режима повторения можно использовать Систему Лейтнера
-
-https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0_%D0%9B%D0%B5%D0%B9%D1%82%D0%BD%D0%B5%D1%80%D0%B0
+- [vue 3](https://v3.ru.vuejs.org/ru/guide/introduction.html) (реактивность)
+- [vite](https://vitejs.dev/guide/) (сборка)
+- [Tailwind](https://tailwindcss.com/docs/guides/vite#vue) (UI)
