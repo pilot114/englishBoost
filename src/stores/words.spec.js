@@ -33,7 +33,6 @@ describe('Words Store', () => {
         let dict = store.parse(data.text, data.name)
 
         expect(dict.text).toBe(data.text)
-        expect(dict.name).toBe(data.name)
 
         expect(dict.words.length).toBe(data.wordCount)
         expect(dict.frequency.the).toBe(data.theCount)
@@ -62,5 +61,34 @@ describe('Words Store', () => {
         const result = await store.translate(words)
 
         expect(result.length).toBe(words.length)
+    })
+
+    it('step', () => {
+        provider.forEach(data => store.append(store.parse(data.text, data.name)))
+        store.toLearn(5)
+
+        store.step()
+        expect(Object.keys(store.getForLesson).length).toBe(5)
+        store.step()
+        expect(Object.keys(store.getForLesson).length).toBe(0)
+    })
+
+    it('saveLesson', () => {
+        provider.forEach(data => store.append(store.parse(data.text, data.name)))
+        store.toLearn(5)
+        store.step()
+
+        let lesson = store.getForLesson
+
+        lesson.the = true
+        lesson.a = true
+        lesson.is = true
+        lesson.of = false
+        lesson.you = false
+
+        store.saveLesson(lesson)
+
+        expect(Object.keys(store.getInterval(1)).length).toBe(2)
+        expect(Object.keys(store.getInterval(2)).length).toBe(3)
     })
 })

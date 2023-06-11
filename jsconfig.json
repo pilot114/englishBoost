@@ -1,0 +1,8 @@
+{
+  "_comment": "This file is used to trick IntelliJ/Webstorm/PHPStorm to use the correct alias as defined in vite.config.js",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

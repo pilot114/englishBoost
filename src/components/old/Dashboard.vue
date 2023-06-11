@@ -71,7 +71,7 @@
      * loadDicts & loadBooks - загрузка базовых структур из хранилища
      */
     function loadDicts() {
-        return JSON.parse(localStorage.getItem('dicts'));
+        return JSON.parse(localStorage.getItem('dicts'))
     }
 
     function loadBooks() {

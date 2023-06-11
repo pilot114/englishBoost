@@ -5,7 +5,7 @@
         class="rounded overflow-hidden shadow-lg hover:bg-blue-100 border border-gray-300"
     >
       <div class="px-6 py-4" style="cursor: pointer">
-        <div class="font-bold text-xl mb-2">{{ card.title }}</div>
+        <div class="font-bold text-xl mb-2">{{ card.name }}</div>
         <p class="text-gray-700 text-base">
           <slot :card="card">
             {{ card.text }}

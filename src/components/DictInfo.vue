@@ -1,18 +1,21 @@
 <script setup>
 import InputText from './common/InputText.vue'
 import Button from './common/Button.vue'
+
+import { mapActions } from 'pinia'
+import { useWordsStore } from "@/stores/words"
 </script>
 
 <template>
   <div v-if="newBook" class="px-10 py-5 border rounded-md mt-5">
     <div class="grid grid-cols-3 gap-4">
-      <InputText v-model="newBook.title" placeholder="Название"/>
+      <InputText v-model="newBook.name" placeholder="Название"/>
       <InputText class="col-span-2" v-model="newBook.description" placeholder="Описание"/>
     </div>
 
     <div class="py-5">
-      <p>Всего слов: {{ newBook.dict.words.length }}</p>
-      <p>Уникальных: {{ Object.keys(newBook.dict.frequency).length }}</p>
+<!--      <p>Всего слов: {{ newBook.dict.words.length }}</p>-->
+<!--      <p>Уникальных: {{ Object.keys(newBook.dict.frequency).length }}</p>-->
 
 <!--      <p>Из них:</p>-->
 <!--      <p>Новые - {{ newBook.counters.new }}</p>-->
@@ -24,12 +27,12 @@ import Button from './common/Button.vue'
     <Button
         text="Добавить"
         color="green"
-        @click="$emit('add', newBook)"
+        @click="add"
     />
     <Button
         text="Отмена"
         color="white"
-        @click="$emit('cancel')"
+        @click="$emit('close')"
     />
   </div>
 </template>
@@ -40,20 +43,22 @@ export default {
   props: {
     text: String,
     name: String,
-    engine: Object,
   },
   created() {
-    this.newBook.title = this.name;
-    this.newBook.dict = this.engine.parse(this.text);
+    this.newBook = this.parse(this.text)
+    this.newBook.name = this.name
   },
   data() {
     return {
-      newBook: {
-        title: null,
-        description: null,
-        dict: null,
-      },
+      newBook: null,
     }
   },
+  methods: {
+    ...mapActions(useWordsStore, ['parse', 'append']),
+    add() {
+      this.append(this.newBook)
+      this.$emit('close')
+    }
+  }
 }
 </script>
