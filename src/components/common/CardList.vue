@@ -1,10 +1,10 @@
 <template>
-  <div class="px-10 py-5 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-3">
+  <div class="px-10 pb-5 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-3">
     <div
         v-for="(card) of cards"
-        class="rounded overflow-hidden shadow-lg hover:bg-blue-100"
+        class="rounded overflow-hidden shadow-lg hover:bg-blue-100 border border-gray-300"
     >
-      <div class="px-6 py-4">
+      <div class="px-6 py-4" style="cursor: pointer">
         <div class="font-bold text-xl mb-2">{{ card.title }}</div>
         <p class="text-gray-700 text-base">
           <slot :card="card">

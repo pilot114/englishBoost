@@ -35,8 +35,6 @@ import Button from './common/Button.vue'
 </template>
 
 <script>
-import Engine from './../domain/Engine.js'
-
 export default {
   name: "DictInfo",
   props: {
