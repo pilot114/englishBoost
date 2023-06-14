@@ -1,12 +1,16 @@
 <template>
-  <!--  TODO: изученное -->
-  3
+  <div v-for="(value, key) in getArchive">
+    {{ key }}: {{ value }}
+  </div>
 </template>
 
 <script>
+import {mapActions, mapState} from "pinia";
+import {useWordsStore} from "@/stores/words";
+
 export default {
-  props: {
-    engine: Object,
-  },
+  computed: {
+    ...mapState(useWordsStore, ['getArchive']),
+  }
 }
 </script>

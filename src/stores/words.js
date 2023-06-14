@@ -27,12 +27,16 @@ export const useWordsStore = defineStore('main', {
         maxLevel: 5,
     }),
     getters: {
+        getMaxLevel: (state) => state.maxLevel,
         getDicts: (state) => state.dictionaries,
         getWordPoolSize: (state) => Object.keys(state.wordPool).length,
         getInterval: (state) => {
             return (level) => subset(state.wordPool, (k, v) => v.level === level)
         },
-        getForLesson: (state) => subset(state.wordPool, (k, v) => v.countdown === 0),
+        getForLearn: (state) => {
+            return (count) => getMaxByField(subset(state.wordPool, (k, v) => v.level === 0), 'frequency', count)
+        },
+        getForLesson: (state) => subset(state.wordPool, (k, v) => v.countdown === 0 && v.level > 0),
         getArchive: (state) => state.archive,
     },
     actions: {
@@ -54,31 +58,28 @@ export const useWordsStore = defineStore('main', {
 
         append(dict) {
             this.dictionaries.push(dict)
+            // tmp for performance
+            let tmp = JSON.parse(JSON.stringify(this.wordPool))
 
-            // mix
-            const currentWords = Object.keys(this.wordPool)
-            const appendWords = Object.keys(dict.frequency)
-
-            appendWords.forEach(word => {
-                const isNew = !currentWords.includes(word)
-                if (isNew) {
-                    this.wordPool[word] = {
-                        frequency: dict.frequency[word],
-                        ru: null,
-                        level: 0,
-                    }
-                } else {
-                    this.wordPool[word].frequency += dict.frequency[word]
-                }
-            })
+            Object.keys(dict.frequency).forEach(word => {
+                tmp[word] = {
+                    frequency: (this.wordPool[word]?.frequency ?? 0) + dict.frequency[word],
+                    ru: null,
+                    level: 0,
+                };
+            });
+            this.wordPool = tmp
         },
 
-        toLearn(count) {
-            const words = getMaxByField(this.getInterval(0), 'frequency', count)
-            words.forEach((word) => {
-                this.wordPool[word].level = 1
-                this.wordPool[word].countdown = 1
+        toLearn(words) {
+            let all = JSON.parse(JSON.stringify(this.wordPool))
+            Object.entries(words).forEach(([word, ru]) => {
+                all[word].level = 1
+                all[word].countdown = 1
+                all[word].ru = ru
             })
+
+            this.wordPool = all
         },
 
         async translate(words) {
@@ -103,36 +104,47 @@ export const useWordsStore = defineStore('main', {
                 const response = await fetch(url, options)
                 const text = await response.text()
                 const data = JSON.parse(text).response
-                return data.split(' | ')
+                return data.split('|').map(x => x.trim())
             } catch (error) {
                 console.error(error)
             }
         },
 
         step() {
-            Object.keys(this.wordPool).forEach((word) => this.wordPool[word].countdown--)
+            let tmp = JSON.parse(JSON.stringify(this.wordPool))
+
+            Object.keys(this.wordPool).forEach((word) => {
+                if (tmp[word].countdown > 0) {
+                    tmp[word].countdown--
+                }
+            })
+            this.wordPool = tmp
         },
 
         saveLesson(words) {
+            let tmp = JSON.parse(JSON.stringify(this.wordPool))
+
             Object.entries(words).forEach(([word, result]) => {
                 if (!result) {
-                    if (this.wordPool[word].level > 1) {
-                        this.wordPool[word].level--
-                        this.wordPool[word].countdown = this.wordPool[word].level
+                    if (tmp[word].level > 1) {
+                        tmp[word].level--
+                        tmp[word].countdown = tmp[word].level
                     }
                     return
                 }
 
-                if (this.wordPool[word].level === this.maxLevel) {
-                    this.archive[word] = this.wordPool[word]
-                    delete this.wordPool[word]
+                if (tmp[word].level === this.maxLevel) {
+                    this.archive[word] = tmp[word]
+                    delete tmp[word]
                     return
                 }
 
-                this.wordPool[word].level++
-                this.wordPool[word].countdown = this.wordPool[word].level
+                tmp[word].level++
+                tmp[word].countdown = tmp[word].level
             })
-        }
+
+            this.wordPool = tmp
+        },
     },
     persist: true,
 })

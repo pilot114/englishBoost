@@ -5,6 +5,10 @@ import Footer from '@/components/common/Footer.vue'
 import Dicts from '@/components/views/Dicts.vue'
 import Learn from '@/components/views/Learn.vue'
 import Lexicon from '@/components/views/Lexicon.vue'
+
+import { useWordsStore } from "@/stores/words"
+import { mapActions } from 'pinia'
+import Button from "@/components/common/Button.vue";
 </script>
 
 <template>
@@ -13,6 +17,7 @@ import Lexicon from '@/components/views/Lexicon.vue'
       :pages="pages"
       img="./english.png"
   />
+  <Button text="reset" @click="$reset"/>
   <main class="container mx-auto px-4">
     <Dicts v-if="page.id === 1"/>
     <Learn v-if="page.id === 2"/>
@@ -33,5 +38,8 @@ import Lexicon from '@/components/views/Lexicon.vue'
         ],
       }
     },
+    methods: {
+      ...mapActions(useWordsStore, ['$reset']),
+    }
   }
 </script>

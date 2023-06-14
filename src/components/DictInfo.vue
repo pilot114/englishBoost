@@ -31,7 +31,6 @@ import { useWordsStore } from "@/stores/words"
     />
     <Button
         text="Отмена"
-        color="white"
         @click="$emit('close')"
     />
   </div>

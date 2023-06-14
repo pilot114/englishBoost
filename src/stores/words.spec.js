@@ -3,7 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useWordsStore } from './words'
 
 let store = null
-let provider = [
+const provider = [
     {
         text: "The let keyword declares a BLock-scoped variable, which means that the variable " +
             "is only accessible within The block of code in which it was declared, whereas the var keyword",
@@ -22,6 +22,7 @@ let provider = [
         keywordCount: undefined,
     },
 ]
+let translated = {is:'is',a:'a',the:'the',of:'of',to:'to'}
 
 describe('Words Store', () => {
     beforeEach(() => {
@@ -49,7 +50,7 @@ describe('Words Store', () => {
     it('toLearn', () => {
         provider.forEach(data => store.append(store.parse(data.text, data.name)))
 
-        store.toLearn(5)
+        store.toLearn(translated)
         expect(Object.keys(store.getInterval(1)).length).toBe(5)
     })
 
@@ -65,26 +66,24 @@ describe('Words Store', () => {
 
     it('step', () => {
         provider.forEach(data => store.append(store.parse(data.text, data.name)))
-        store.toLearn(5)
+        store.toLearn(translated)
 
         store.step()
         expect(Object.keys(store.getForLesson).length).toBe(5)
-        store.step()
-        expect(Object.keys(store.getForLesson).length).toBe(0)
     })
 
     it('saveLesson', () => {
         provider.forEach(data => store.append(store.parse(data.text, data.name)))
-        store.toLearn(5)
+        store.toLearn(translated)
         store.step()
 
         let lesson = store.getForLesson
 
-        lesson.the = true
-        lesson.a = true
         lesson.is = true
+        lesson.a = true
+        lesson.the = true
         lesson.of = false
-        lesson.you = false
+        lesson.to = false
 
         store.saveLesson(lesson)
 

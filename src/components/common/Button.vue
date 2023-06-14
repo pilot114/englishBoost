@@ -12,12 +12,15 @@ export default {
   name: "Button",
   props: {
     text: String,
-    color: String,
+    color: {
+      type: String,
+      default: 'white',
+    },
   },
   data() {
     return {
       colors: {
-        white: 'bg-white-500 hover:bg-white-600',
+        white: 'bg-white hover:bg-slate-100',
         cyan: 'bg-cyan-500 hover:bg-cyan-600',
         orange: 'bg-orange-500 hover:bg-orange-600',
         green: 'bg-green-500 hover:bg-green-600',

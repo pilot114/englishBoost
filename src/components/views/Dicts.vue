@@ -6,7 +6,7 @@ import CardList from '@/components/common/CardList.vue'
 import { mapState } from 'pinia'
 import { useWordsStore } from "@/stores/words"
 </script>
-
+as
 <template>
   <DictInfo
       v-if="text"
