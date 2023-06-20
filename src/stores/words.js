@@ -127,7 +127,7 @@ export const useWordsStore = defineStore('main', {
             Object.entries(words).forEach(([word, result]) => {
                 if (!result) {
                     if (tmp[word].level > 1) {
-                        tmp[word].level--
+                        tmp[word].level = 1
                         tmp[word].countdown = tmp[word].level
                     }
                     return
