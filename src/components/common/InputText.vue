@@ -18,7 +18,7 @@
 
 <script>
 export default {
-  name: "InputFile",
+  name: "InputText",
   props: {
     placeholder: String,
     modelValue: String,

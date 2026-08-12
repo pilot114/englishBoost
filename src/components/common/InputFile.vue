@@ -3,15 +3,15 @@ import Spinner from './Spinner.vue'
 </script>
 
 <template>
-  <div class="flex flex-row px-10 py-5">
+  <div class="flex flex-row items-center gap-3 py-2">
       <Spinner v-if="loading"/>
       <input
           @change="readFile"
           ref="file"
           type="file"
           accept="text/*"
-          class="block w-full text-sm text-gray-500
-        file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold hover:file:bg-blue-100"
+          class="block w-full min-w-0 text-sm text-gray-500
+        file:mr-4 file:rounded-full file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-blue-100"
       />
   </div>
 </template>

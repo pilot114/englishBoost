@@ -1,6 +1,7 @@
 <template>
   <button
-      class="text-black-700 border font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
+      type="button"
+      class="rounded-lg border border-gray-200 px-5 py-2.5 text-center text-sm font-medium transition focus:outline-hidden focus:ring-2 focus:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
       :class="colors[color]"
   >
     {{ text }}
@@ -20,11 +21,11 @@ export default {
   data() {
     return {
       colors: {
-        white: 'bg-white hover:bg-slate-100',
-        cyan: 'bg-cyan-500 hover:bg-cyan-600',
-        orange: 'bg-orange-500 hover:bg-orange-600',
-        green: 'bg-green-500 hover:bg-green-600',
-        red: 'bg-red-500 hover:bg-red-600',
+        white: 'bg-white text-gray-800 hover:bg-slate-100',
+        cyan: 'bg-cyan-500 text-white hover:bg-cyan-600',
+        orange: 'bg-orange-500 text-white hover:bg-orange-600',
+        green: 'bg-green-600 text-white hover:bg-green-700',
+        red: 'bg-red-600 text-white hover:bg-red-700',
       }
     }
   },

@@ -7,10 +7,10 @@ import { useWordsStore } from "@/stores/words"
 </script>
 
 <template>
-  <div v-if="newBook" class="px-10 py-5 border rounded-md mt-5">
-    <div class="grid grid-cols-3 gap-4">
+  <div v-if="newBook" class="mt-5 rounded-md border border-gray-200 p-4 sm:p-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <InputText v-model="newBook.name" placeholder="Название"/>
-      <InputText class="col-span-2" v-model="newBook.description" placeholder="Описание"/>
+      <InputText class="sm:col-span-2" v-model="newBook.description" placeholder="Описание"/>
     </div>
 
     <div class="py-5">
@@ -24,15 +24,17 @@ import { useWordsStore } from "@/stores/words"
 <!--      <p>Знаю - {{ newBook.counters.known }}</p>-->
     </div>
 
-    <Button
-        text="Добавить"
-        color="green"
-        @click="add"
-    />
-    <Button
-        text="Отмена"
-        @click="$emit('close')"
-    />
+    <div class="flex flex-wrap gap-2">
+      <Button
+          text="Добавить"
+          color="green"
+          @click="add"
+      />
+      <Button
+          text="Отмена"
+          @click="$emit('close')"
+      />
+    </div>
   </div>
 </template>
 

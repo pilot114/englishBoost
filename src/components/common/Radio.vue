@@ -1,23 +1,24 @@
 <template>
-  <div class="w-full px-4 py-16">
+  <div class="w-full py-6">
     <div class="mx-auto w-full max-w-md">
       <RadioGroup
-          v-model="value"
+          :modelValue="modelValue"
+          @update:modelValue="choose"
       >
         <RadioGroupLabel class="sr-only">Server size</RadioGroupLabel>
         <div class="space-y-2">
           <RadioGroupOption
               as="template"
-              v-for="(item, key) in items"
-              :key="key"
+              v-for="item in options"
+              :key="item"
               :value="item"
               v-slot="{ checked }"
           >
             <div
                 :class="[
-                checked ? 'bg-sky-900 bg-opacity-75 text-white' : 'bg-white',
+                checked ? 'bg-sky-900/75 text-white' : 'bg-white',
               ]"
-                class="relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md outline-none"
+                class="relative flex cursor-pointer rounded-lg px-5 py-4 shadow-md outline-hidden"
             >
               <div class="flex w-full items-center justify-between">
                 <div class="flex items-center">
@@ -74,20 +75,31 @@ export default {
     modelValue: String,
     items: Array,
   },
-  data() {
-    return {
-      value: this.modelValue
-    }
-  },
   emits: ['select', 'update:modelValue'],
-  watch: {
-    value(value) {
+  computed: {
+    /**
+     * Пустые варианты не показываем: их значение совпало бы с «ничего не выбрано»,
+     * и такой вариант отрисовался бы уже выбранным, но нажать на него было бы нельзя.
+     */
+    options() {
+      return (this.items ?? []).filter(Boolean)
+    },
+  },
+  methods: {
+    /**
+     * Компонент полностью управляемый: своей копии выбранного значения нет.
+     *
+     * Раньше выбранное значение хранилось в data и заполнялось из modelValue
+     * только при создании. После этого две величины расходились, и стоило
+     * компоненту пересоздаться (окно урока размонтируется между уроками) —
+     * в новом вопросе мог оказаться заранее подсвеченный вариант.
+     */
+    choose(value) {
       if (!value) {
         return
       }
       this.$emit('update:modelValue', value)
       this.$emit('select', value)
-      this.value = null
     },
   },
 }
