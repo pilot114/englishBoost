@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { buildPrompt, cleanTranslation, translateAll, TRANSLATOR_MODEL, WORD_TIMEOUT } from './translator'
+import {
+    buildPrompt,
+    cleanTranslation,
+    SENTENCE_TIMEOUT,
+    translateAll,
+    TRANSLATOR_MODEL,
+    warmup,
+    WARMUP_TIMEOUT,
+    WORD_TIMEOUT,
+} from './translator'
 
 /** ответ в формате OpenAI-совместимого API, как его отдаёт LM Studio */
 function reply(content) {
@@ -159,6 +168,54 @@ describe('translateAll', () => {
 
         expect(fetchMock).toHaveBeenCalledTimes(1)
         expect(result).toEqual(['перевод', null, null])
+    })
+})
+
+describe('warmup', () => {
+    it('поднимает модель одним запросом без генерации', async () => {
+        const fetchMock = vi.fn(async () => reply(''))
+        vi.stubGlobal('fetch', fetchMock)
+
+        await warmup()
+
+        expect(fetchMock).toHaveBeenCalledTimes(1)
+        const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+        expect(body.model).toBe(TRANSLATOR_MODEL)
+        expect(body.max_tokens).toBe(1)
+    })
+
+    it('недоступный сервер — ошибка, а не молчание', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
+
+        await expect(warmup()).rejects.toThrow('Failed to fetch')
+    })
+
+    it('ошибку сервера тоже не проглатывает', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503 })))
+
+        await expect(warmup()).rejects.toThrow('503')
+    })
+
+    it('ждёт минутами: холодная загрузка не должна обрываться таймаутом перевода', () => {
+        expect(WARMUP_TIMEOUT).toBeGreaterThan(SENTENCE_TIMEOUT)
+    })
+
+    it('но не ждёт бесконечно', async () => {
+        vi.stubGlobal('fetch', vi.fn((url, { signal }) => new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => reject(signal.reason))
+        })))
+
+        await expect(warmup({ timeout: 50 })).rejects.toThrow()
+    })
+
+    it('отмена прерывает запрос', async () => {
+        const controller = new AbortController()
+        vi.stubGlobal('fetch', vi.fn((url, { signal }) => new Promise((resolve, reject) => {
+            signal.addEventListener('abort', () => reject(signal.reason))
+            controller.abort()
+        })))
+
+        await expect(warmup({ signal: controller.signal })).rejects.toThrow()
     })
 })
 

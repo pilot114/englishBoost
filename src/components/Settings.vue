@@ -47,6 +47,41 @@
         </ul>
       </div>
 
+      <!-- переводчик -->
+      <div class="border-t border-gray-200 pt-4">
+        <div class="mb-2 text-sm font-medium text-gray-900">Локальная модель</div>
+        <p class="mb-3 text-sm text-gray-500">
+          Первая загрузка модели занимает минуты — перевод столько не ждёт и падает по таймауту.
+          Прогрев поднимает её заранее, одного раза на запуск сервера достаточно.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <button
+              type="button"
+              class="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-40 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+              :disabled="warming"
+              @click="warmUp"
+          >
+            {{ warming ? 'Прогреваем…' : 'Прогреть модель' }}
+          </button>
+
+          <button
+              v-if="warming"
+              type="button"
+              class="rounded-lg px-2 py-2 text-sm text-gray-500 hover:text-gray-700 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+              @click="cancelWarmUp"
+          >
+            Отменить
+          </button>
+
+          <span v-if="warming" class="text-sm text-gray-500">{{ elapsed }} с</span>
+          <span v-else-if="warmState === 'ready'" class="text-sm text-green-600">
+            Модель готова — {{ elapsed }} с
+          </span>
+          <span v-else-if="warmState === 'error'" class="text-sm text-red-600">{{ warmError }}</span>
+        </div>
+      </div>
+
       <!-- отладка -->
       <div class="border-t border-gray-200 pt-4">
         <div class="mb-2 text-sm font-medium text-gray-900">Отладка</div>
@@ -103,6 +138,7 @@
 import { mapActions, mapState } from 'pinia'
 import Modal from '@/components/common/Modal.vue'
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, useWordsStore } from '@/stores/words'
+import { warmup, WARMUP_TIMEOUT } from '@/domain/translator'
 
 export default {
   name: 'Settings',
@@ -115,6 +151,14 @@ export default {
     return {
       // сколько дней промотали за это открытие окна — обратная связь на нажатие
       skipped: 0,
+      // idle → loading → ready | error; переживает закрытие окна, но не перезагрузку
+      // страницы: за это время модель могла успеть выгрузиться
+      warmState: 'idle',
+      warmError: '',
+      // секунды с начала прогрева: загрузка идёт минутами, без счётчика непонятно, живо ли оно
+      elapsed: 0,
+      warmController: null,
+      warmTimer: null,
     }
   },
   watch: {
@@ -128,12 +172,50 @@ export default {
     ...mapState(useWordsStore, ['getFontSize']),
     MIN_FONT_SIZE: () => MIN_FONT_SIZE,
     MAX_FONT_SIZE: () => MAX_FONT_SIZE,
+    warming() {
+      return this.warmState === 'loading'
+    },
+  },
+  // прогрев не привязан к окну: закрыли настройки — модель всё равно догрузится
+  beforeUnmount() {
+    clearInterval(this.warmTimer)
   },
   methods: {
     ...mapActions(useWordsStore, ['setFontSize', 'step', 'resetProgress', '$reset']),
     skipDay() {
       this.step()
       this.skipped++
+    },
+    async warmUp() {
+      const controller = new AbortController()
+
+      this.warmController = controller
+      this.warmState = 'loading'
+      this.warmError = ''
+      this.elapsed = 0
+      this.warmTimer = setInterval(() => this.elapsed++, 1000)
+
+      try {
+        await warmup({ signal: controller.signal })
+        this.warmState = 'ready'
+      } catch (error) {
+        // отменил пользователь — это не ошибка, просто возвращаем кнопку в исходное
+        if (controller.signal.aborted) {
+          this.warmState = 'idle'
+        } else {
+          this.warmState = 'error'
+          this.warmError = error.name === 'TimeoutError'
+              ? `Модель не поднялась за ${Math.round(WARMUP_TIMEOUT / 60000)} мин`
+              : 'Локальная модель недоступна'
+        }
+      } finally {
+        clearInterval(this.warmTimer)
+        this.warmTimer = null
+        this.warmController = null
+      }
+    },
+    cancelWarmUp() {
+      this.warmController?.abort()
     },
     resetLearning() {
       if (window.confirm('Обнулить прогресс обучения? Тексты и фразы останутся.')) {

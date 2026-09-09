@@ -1,6 +1,6 @@
 import { expect, describe, it, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useWordsStore } from './words'
+import { SENTENCE_CACHE_LIMIT, useWordsStore } from './words'
 import { BASICS, BUILTIN_DICT_ID } from '@/domain/basics'
 
 let store = null
@@ -457,6 +457,51 @@ describe('Words Store', () => {
 
             store.toLearn({ 'code block': '' })
             expect(store.getPhrasePool['code block'].level).toBe(0)
+        })
+    })
+
+    describe('кэш переводов предложений', () => {
+        const sentence = 'The rabbit was late again.'
+
+        it('переведённое предложение достаётся из кэша', () => {
+            expect(store.getSentenceTranslation(sentence)).toBeNull()
+
+            store.cacheSentence(sentence, 'Кролик снова опаздывал.')
+
+            expect(store.getSentenceTranslation(sentence)).toBe('Кролик снова опаздывал.')
+        })
+
+        it('вёрстка страницы на кэш не влияет', () => {
+            store.cacheSentence(sentence, 'Кролик снова опаздывал.')
+
+            expect(store.getSentenceTranslation('The rabbit\nwas late again.'))
+                .toBe('Кролик снова опаздывал.')
+        })
+
+        it('ключ — хэш, а не само предложение', () => {
+            store.cacheSentence(sentence, 'Кролик снова опаздывал.')
+
+            expect(Object.keys(store.current.sentences)).not.toContain(sentence)
+        })
+
+        it('перевод хранится отдельно по языкам', () => {
+            store.cacheSentence(sentence, 'Кролик снова опаздывал.')
+            store.setLanguage('sr')
+
+            expect(store.getSentenceTranslation(sentence)).toBeNull()
+        })
+
+        it('кэш не растёт бесконечно: старое вытесняется', () => {
+            const total = SENTENCE_CACHE_LIMIT + 10
+
+            for (let i = 0; i < total; i++) {
+                store.cacheSentence(`Sentence number ${i}.`, `Предложение ${i}.`)
+            }
+
+            expect(Object.keys(store.current.sentences).length).toBeLessThanOrEqual(SENTENCE_CACHE_LIMIT)
+            // свежие переводы на месте, самые первые вытеснены
+            expect(store.getSentenceTranslation(`Sentence number ${total - 1}.`)).toBe(`Предложение ${total - 1}.`)
+            expect(store.getSentenceTranslation('Sentence number 0.')).toBeNull()
         })
     })
 

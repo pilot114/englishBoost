@@ -93,6 +93,43 @@ export function phraseKey(words) {
     return words.map(word => word.toLowerCase()).join(' ')
 }
 
+/**
+ * 53-битный хэш строки (cyrb53).
+ *
+ * 53 бита — предел точности числа в JS. Ширина взята не с запасом: на 32 битах
+ * пара разных предложений с одинаковым хэшем встретилась бы уже на десятке тысяч
+ * записей (парадокс дней рождения), а коллизия здесь означает чужой перевод в
+ * карточке — молча и без возможности заметить.
+ */
+function cyrb53(text) {
+    let h1 = 0xdeadbeef
+    let h2 = 0x41c6ce57
+
+    for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i)
+        h1 = Math.imul(h1 ^ code, 2654435761)
+        h2 = Math.imul(h2 ^ code, 1597334677)
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909)
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909)
+
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0)
+}
+
+/**
+ * Ключ предложения для кэша переводов.
+ *
+ * Само предложение ключом не годится: кэш лежит в localStorage рядом с текстами
+ * и словарями, а там место общее и небесконечное. Хэш даёт полтора десятка
+ * символов независимо от длины предложения.
+ *
+ * Переносы строк схлопываем: одно и то же предложение в разной вёрстке страницы
+ * не должно переводиться дважды.
+ */
+export function sentenceKey(text) {
+    return cyrb53(String(text ?? '').replace(/\s+/g, ' ').trim()).toString(36)
+}
+
 /** выделенный кусок текста -> ключ фразы, посторонние символы отбрасываются */
 export function phraseFromSelection(text, wordPattern) {
     return phraseKey([...String(text ?? '').matchAll(wordPattern)].map(match => match[0]))

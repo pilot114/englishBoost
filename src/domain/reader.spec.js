@@ -5,6 +5,7 @@ import {
     markPhrases,
     phraseFromSelection,
     phraseKey,
+    sentenceKey,
     sentencePhrases,
     splitSentences,
     paginate,
@@ -206,6 +207,47 @@ describe('sentencePhrases', () => {
 describe('phraseKey', () => {
     it('склеивает слова в нижнем регистре через пробел', () => {
         expect(phraseKey(['Give', 'UP'])).toBe('give up')
+    })
+})
+
+describe('sentenceKey', () => {
+    const sentence = 'The rabbit was late again.'
+
+    it('одно предложение — один ключ', () => {
+        expect(sentenceKey(sentence)).toBe(sentenceKey(sentence))
+    })
+
+    it('ключ короткий независимо от длины предложения', () => {
+        const long = 'Alice was beginning to get very tired of sitting by her sister on the bank, '
+            + 'and of having nothing to do: once or twice she had peeped into the book her sister was reading.'
+
+        expect(sentenceKey(long).length).toBeLessThan(15)
+    })
+
+    it('разные предложения — разные ключи', () => {
+        expect(sentenceKey('The rabbit was late.')).not.toBe(sentenceKey('The rabbit was here.'))
+    })
+
+    it('перенос строки внутри предложения ключ не меняет', () => {
+        // одно и то же предложение на разных страницах разбивается по-разному
+        expect(sentenceKey('The rabbit\n  was late again.')).toBe(sentenceKey(sentence))
+    })
+
+    it('регистр и знаки важны: это разные предложения', () => {
+        expect(sentenceKey('Run!')).not.toBe(sentenceKey('run!'))
+        expect(sentenceKey('Run!')).not.toBe(sentenceKey('Run?'))
+    })
+
+    it('переживает пустой ввод', () => {
+        expect(sentenceKey('')).toBe(sentenceKey(null))
+    })
+
+    it('не выдаёт один ключ на разные предложения книги', () => {
+        // на 32-битном хэше коллизия здесь была бы делом времени
+        const sentences = Array.from({ length: 5000 }, (_, i) => `The rabbit was late ${i} times.`)
+        const keys = new Set(sentences.map(sentenceKey))
+
+        expect(keys.size).toBe(sentences.length)
     })
 })
 

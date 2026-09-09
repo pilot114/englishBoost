@@ -106,7 +106,7 @@ function abortSignal(signal, timeout) {
 }
 
 /** один запрос к модели; бросает исключение, если сервер недоступен, завис или ответил ошибкой */
-export async function translateOne(text, { from, to, signal, timeout = WORD_TIMEOUT } = {}) {
+async function complete({ prompt, signal, timeout, maxTokens }) {
     const response = await fetch(TRANSLATOR_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,7 +114,8 @@ export async function translateOne(text, { from, to, signal, timeout = WORD_TIME
         body: JSON.stringify({
             model: TRANSLATOR_MODEL,
             temperature: 0,
-            messages: [{ role: 'user', content: buildPrompt(text, from, to) }],
+            ...(maxTokens ? { max_tokens: maxTokens } : {}),
+            messages: [{ role: 'user', content: prompt }],
         }),
     })
 
@@ -123,7 +124,38 @@ export async function translateOne(text, { from, to, signal, timeout = WORD_TIME
     }
 
     const data = await response.json()
-    return cleanTranslation(data?.choices?.[0]?.message?.content, text) || null
+    return data?.choices?.[0]?.message?.content
+}
+
+export async function translateOne(text, { from, to, signal, timeout = WORD_TIMEOUT } = {}) {
+    const raw = await complete({ prompt: buildPrompt(text, from, to), signal, timeout })
+    return cleanTranslation(raw, text) || null
+}
+
+/**
+ * Сколько ждём загрузки модели в память. Столько же держит соединение прокси vite
+ * (см. vite.config.mjs) — ждать дольше прокси всё равно бессмысленно.
+ */
+export const WARMUP_TIMEOUT = 15 * 60 * 1000
+
+/**
+ * Прогрев: заставляет сервер поднять модель в память заранее.
+ *
+ * Первая загрузка 12B занимает минуты, а перевод столько не ждёт — холодный
+ * запрос гарантированно падает по таймауту, и пользователь видит «модель
+ * недоступна» вместо перевода. Прогрев — тот же запрос, но с таймаутом под
+ * загрузку и без генерации ответа (max_tokens: 1): важен сам факт, что модель
+ * поднялась, дальше переводы идут по прогретой.
+ *
+ * Бросает исключение, если сервер недоступен или не успел за timeout.
+ */
+export async function warmup({ signal, timeout = WARMUP_TIMEOUT } = {}) {
+    await complete({
+        prompt: buildPrompt('ok', 'English', 'Russian'),
+        signal,
+        timeout,
+        maxTokens: 1,
+    })
 }
 
 /**

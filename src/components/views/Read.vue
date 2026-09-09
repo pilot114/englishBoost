@@ -262,8 +262,6 @@ export default {
       popover: {},
       // какое предложение выделено: { paragraph, index }
       activeSentence: null,
-      // переводы предложений за сессию; в localStorage не кладём — раздует хранилище
-      sentenceCache: {},
       // загруженный, но ещё не сохранённый текст: ждём название и описание
       pendingText: null,
       pendingName: null,
@@ -280,6 +278,7 @@ export default {
       'getWordStatus',
       'getPhraseStatus',
       'getTranslation',
+      'getSentenceTranslation',
       'getLearnMode',
       'getLanguageConfig',
       'getLanguageCode',
@@ -338,6 +337,7 @@ export default {
       'toLearn',
       'translate',
       'setTranslation',
+      'cacheSentence',
       'setReadingProgress',
       'addPhrase',
     ]),
@@ -418,7 +418,7 @@ export default {
       this.active = {
         kind: SENTENCE,
         key: sentence.text,
-        translation: this.sentenceCache[sentence.text] ?? null,
+        translation: this.getSentenceTranslation(sentence.text),
         phrases: sentencePhrases(sentence).map(key => ({
           key,
           ru: this.getPhrasePool[key]?.ru ?? this.getPhraseArchive[key]?.ru ?? null,
@@ -448,7 +448,7 @@ export default {
         this.translateError = 'Не удалось перевести'
         return
       }
-      this.sentenceCache[sentence] = translation
+      this.cacheSentence(sentence, translation)
       this.active = { ...this.active, translation }
     },
 

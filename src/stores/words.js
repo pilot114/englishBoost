@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { DEFAULT_LANGUAGE, getLanguage, LANGUAGES } from '@/domain/languages'
 import { basicDictionary, basicEntries, BUILTIN_DICT_ID, getBasics } from '@/domain/basics'
+import { sentenceKey } from '@/domain/reader'
 import { translateAll } from '@/domain/translator'
 
 /**
@@ -18,6 +19,15 @@ function subset(obj, filterFn) {
 
 export const MIN_FONT_SIZE = 14
 export const MAX_FONT_SIZE = 26
+
+/**
+ * Сколько переводов предложений держим на язык.
+ *
+ * Кэш делит localStorage с текстами и словарями, поэтому расти бесконечно ему
+ * нельзя: переполнение хранилища убило бы всё сохранение целиком, а не только
+ * кэш. Тысячи предложений хватает на несколько книг подряд.
+ */
+export const SENTENCE_CACHE_LIMIT = 2000
 
 function getMaxByField(obj, field, limit) {
     const entries = Object.entries(obj)
@@ -87,6 +97,8 @@ function emptyLanguageState(code = DEFAULT_LANGUAGE) {
         phraseArchive: basicEntries(basics.phrases),
         // id словаря -> доля прочитанного (0..1), для режима чтения
         reading: {},
+        // кэш переводов предложений: хэш предложения -> { ru, at }
+        sentences: {},
     }
 }
 
@@ -190,6 +202,10 @@ export const useWordsStore = defineStore('main', {
          */
         getTranslation() {
             return (key, kind) => this.poolOf(kind)[key]?.ru ?? this.archiveOf(kind)[key]?.ru ?? null
+        },
+        /** перевод предложения из кэша; null — предложение ещё не переводили */
+        getSentenceTranslation() {
+            return (text) => this.current.sentences?.[sentenceKey(text)]?.ru ?? null
         },
         getWordStatus() {
             return (word) => this.getStatus(word, WORD)
@@ -358,6 +374,37 @@ export const useWordsStore = defineStore('main', {
             }
         },
 
+        /**
+         * Запомнить перевод предложения.
+         *
+         * Предложение переводится секундами, а страницу перечитывают: без кэша
+         * каждый повторный клик снова ждал бы модель. В отличие от слов и фраз,
+         * предложение не изучают — его негде хранить, кроме отдельного кэша.
+         */
+        cacheSentence(text, ru) {
+            const slice = this.ensureLanguage(this.language)
+            const entries = Object.entries(slice.sentences)
+
+            // два предложения в одну миллисекунду — обычное дело при перелистывании,
+            // поэтому номер не просто время, а строго больше предыдущего: иначе
+            // вытеснять пришлось бы наугад
+            const last = entries.reduce((max, [, entry]) => Math.max(max, entry.at ?? 0), 0)
+
+            slice.sentences[sentenceKey(text)] = { ru, at: Math.max(Date.now(), last + 1) }
+
+            // Переполнился — выкидываем самые давние переводы: до них дочитали
+            // раньше, значит и вернутся к ним с меньшей вероятностью. Чистим с
+            // запасом, чтобы не сортировать кэш на каждом следующем предложении.
+            if (entries.length + 1 > SENTENCE_CACHE_LIMIT) {
+                const keep = Math.round(SENTENCE_CACHE_LIMIT * 0.9)
+
+                Object.keys(slice.sentences)
+                    .sort((a, b) => slice.sentences[a].at - slice.sentences[b].at)
+                    .slice(0, Object.keys(slice.sentences).length - keep)
+                    .forEach(key => delete slice.sentences[key])
+            }
+        },
+
         /** запомнить позицию чтения (0..1) */
         setReadingProgress(dictId, progress) {
             const slice = this.ensureLanguage(this.language)
@@ -448,6 +495,10 @@ export const useWordsStore = defineStore('main', {
             Object.entries(state.byLanguage ?? {}).forEach(([code, slice]) => {
                 if (!slice.reading) {
                     slice.reading = {}
+                }
+                // кэш переводов предложений появился позже
+                if (!slice.sentences) {
+                    slice.sentences = {}
                 }
                 // пулы фраз появились позже — у ранних сохранений их нет
                 if (!slice.phrasePool) {

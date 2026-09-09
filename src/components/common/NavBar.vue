@@ -3,39 +3,46 @@
     <div class="mx-auto flex h-12 max-w-7xl items-center justify-between gap-2 px-2 sm:px-6 lg:px-8">
       <!-- разделы: иконки помещаются даже на узком экране, поэтому бургер не нужен -->
       <div class="flex items-center gap-1">
-        <button
+        <Tooltip
             v-for="page in pages"
             :key="page.id"
-            type="button"
-            :class="[
-                isCurrent(page)
-                ? 'bg-gray-900 text-white'
-                : 'text-gray-400 hover:bg-gray-700 hover:text-white',
-                'rounded-md p-2 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white'
-            ]"
-            :aria-label="page.name"
-            :aria-current="isCurrent(page) ? 'page' : undefined"
-            :title="page.name"
-            @click="$emit('update:modelValue', page)"
+            :text="page.name"
         >
-          <component :is="icons[page.id]" class="h-5 w-5" aria-hidden="true" />
-        </button>
+          <button
+              type="button"
+              :class="[
+                  isCurrent(page)
+                  ? 'bg-gray-900 text-white'
+                  : 'text-gray-400 hover:bg-gray-700 hover:text-white',
+                  'rounded-md p-2 focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white'
+              ]"
+              :aria-label="page.name"
+              :aria-current="isCurrent(page) ? 'page' : undefined"
+              @click="$emit('update:modelValue', page)"
+          >
+            <component :is="icons[page.id]" class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </Tooltip>
 
         <span class="mx-1 hidden h-5 w-px bg-gray-700 sm:block" aria-hidden="true" />
 
         <!-- навыки, которых в приложении пока нет: видно, куда оно растёт.
              На узких экранах прячем — там дорог каждый пиксель -->
-        <button
+        <Tooltip
             v-for="mode in planned"
             :key="mode.name"
-            type="button"
-            disabled
-            class="hidden cursor-not-allowed rounded-md p-2 text-gray-600 sm:block"
-            :aria-label="`${mode.name} — пока не реализовано`"
-            :title="`${mode.name} — пока не реализовано`"
+            :text="`${mode.name} — пока не реализовано`"
+            class="hidden sm:flex"
         >
-          <component :is="mode.icon" class="h-5 w-5" aria-hidden="true" />
-        </button>
+          <button
+              type="button"
+              disabled
+              class="cursor-not-allowed rounded-md p-2 text-gray-600"
+              :aria-label="`${mode.name} — пока не реализовано`"
+          >
+            <component :is="mode.icon" class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
 
       <div class="flex shrink-0 items-center">
@@ -82,25 +89,27 @@
           </transition>
         </Menu>
 
-        <button
-            type="button"
-            class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
-            aria-label="Как учить язык"
-            title="Как учить язык"
-            @click="$emit('open-guide')"
-        >
-          <InformationCircleIcon class="h-5 w-5" aria-hidden="true" />
-        </button>
+        <Tooltip text="Как учить язык" align="right">
+          <button
+              type="button"
+              class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
+              aria-label="Как учить язык"
+              @click="$emit('open-guide')"
+          >
+            <InformationCircleIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </Tooltip>
 
-        <button
-            type="button"
-            class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
-            aria-label="Настройки"
-            title="Настройки"
-            @click="$emit('open-settings')"
-        >
-          <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
-        </button>
+        <Tooltip text="Настройки" align="right">
+          <button
+              type="button"
+              class="rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-white"
+              aria-label="Настройки"
+              @click="$emit('open-settings')"
+          >
+            <Cog6ToothIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   </nav>
@@ -109,6 +118,7 @@
 <script setup>
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { ChevronDownIcon, Cog6ToothIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
+import Tooltip from '@/components/common/Tooltip.vue'
 </script>
 
 <script>
