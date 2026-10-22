@@ -16,12 +16,16 @@ Vue 3 + Pinia, Vite 8, Vitest 5. Node — версия из `.nvmrc` (24): на 
 
 ## Команды
 
+Обслуживание — как в pretty-php: `npm run test`, `npm run check`, `npm run fix`.
+
+- `check` — eslint, prettier --check; ничего не меняет
+- `fix` — eslint --fix, prettier --write
+- `test` — vitest
+
 Цели Makefile одинаковые во всех проектах `~/projects` (`make help` — список):
 
 - `make install` — поставить зависимости
 - `make dev` — запустить для разработки
-- `make test` — тесты
-- `make lint` — статический анализ
 - `make build` — сборка
 - `make audit` — уязвимости в зависимостях
 - `make outdated` — устаревшие зависимости

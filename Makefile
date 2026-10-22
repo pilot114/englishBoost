@@ -14,14 +14,6 @@ install: ## поставить зависимости
 dev: ## запустить для разработки
 	npm run dev
 
-.PHONY: test
-test: ## тесты
-	npm test
-
-.PHONY: lint
-lint: ## статический анализ
-	@echo "линтера нет"
-
 .PHONY: build
 build: ## сборка
 	npm run build
