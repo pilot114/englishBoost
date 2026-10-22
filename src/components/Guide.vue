@@ -1,29 +1,27 @@
 <template>
   <Modal
-      :isOpen="isOpen"
-      title="Как учить язык"
-      acceptText="Понятно"
-      :showCancel="false"
-      @accept="$emit('close')"
-      @close="$emit('close')"
+    :isOpen="isOpen"
+    title="Как учить язык"
+    acceptText="Понятно"
+    :showCancel="false"
+    @accept="$emit('close')"
+    @close="$emit('close')"
   >
     <div class="space-y-5 text-left text-sm text-gray-600">
       <section>
         <h4 class="mb-1 font-medium text-gray-900">Из чего складывается язык</h4>
         <p>
-          Четыре навыка — чтение, аудирование, письмо, говорение — и два фундамента
-          под ними: словарный запас и грамматика.
+          Четыре навыка — чтение, аудирование, письмо, говорение — и два фундамента под ними: словарный запас и
+          грамматика.
         </p>
       </section>
 
       <section>
         <h4 class="mb-1 font-medium text-gray-900">Вход и выход</h4>
         <p>
-          <span class="font-medium">Пассивные</span> упражнения — вы потребляете язык:
-          читаете, слушаете, разбираете слова.
-          <span class="font-medium">Активные</span> — производите его сами:
-          говорите, пишете, составляете свои предложения.
-          Без второго первое не превращается в умение.
+          <span class="font-medium">Пассивные</span> упражнения — вы потребляете язык: читаете, слушаете, разбираете
+          слова. <span class="font-medium">Активные</span> — производите его сами: говорите, пишете, составляете свои
+          предложения. Без второго первое не превращается в умение.
         </p>
       </section>
 

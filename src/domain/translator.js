@@ -8,11 +8,9 @@
  * Для статической сборки без прокси задайте абсолютный адрес в VITE_TRANSLATOR_URL
  * и включите CORS в настройках сервера LM Studio.
  */
-export const TRANSLATOR_URL =
-    import.meta.env?.VITE_TRANSLATOR_URL ?? '/llm/v1/chat/completions'
+export const TRANSLATOR_URL = import.meta.env?.VITE_TRANSLATOR_URL ?? '/llm/v1/chat/completions'
 
-export const TRANSLATOR_MODEL =
-    import.meta.env?.VITE_TRANSLATOR_MODEL ?? 'translategemma-12b-it'
+export const TRANSLATOR_MODEL = import.meta.env?.VITE_TRANSLATOR_MODEL ?? 'translategemma-12b-it'
 
 /**
  * Промпт в виде языковых меток, а не инструкции.
@@ -24,7 +22,7 @@ export const TRANSLATOR_MODEL =
  * нельзя, поэтому такой утечки не происходит.
  */
 export function buildPrompt(text, from, to) {
-    return `${from}: ${text}\n${to}:`
+  return `${from}: ${text}\n${to}:`
 }
 
 // перевод длиннее исходника во столько раз — это уже толкование, а не перевод
@@ -32,21 +30,23 @@ const MAX_RATIO = 8
 const MAX_LENGTH = 60
 
 function stripNoise(line, source) {
-    let result = line
-        // «Русский: кошка» — модель повторяет метку языка
-        .replace(/^\p{L}{1,20}\s*:\s*/u, '')
+  let result = line
+    // «Русский: кошка» — модель повторяет метку языка
+    .replace(/^\p{L}{1,20}\s*:\s*/u, '')
 
-    if (source) {
-        // «of - из; от; о» — модель повторяет исходное слово перед переводом
-        const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        result = result.replace(new RegExp(`^${escaped}\\s*[-—–:]\\s*`, 'iu'), '')
-    }
+  if (source) {
+    // «of - из; от; о» — модель повторяет исходное слово перед переводом
+    const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    result = result.replace(new RegExp(`^${escaped}\\s*[-—–:]\\s*`, 'iu'), '')
+  }
 
-    return result
-        .replace(/^["'«»]+|["'«»]+$/g, '')
-        // модель заканчивает перевод точкой («сдаться.») — в карточке она лишняя
-        .replace(/(?<!\.)\.$/, '')
-        .trim()
+  return (
+    result
+      .replace(/^["'«»]+|["'«»]+$/g, '')
+      // модель заканчивает перевод точкой («сдаться.») — в карточке она лишняя
+      .replace(/(?<!\.)\.$/, '')
+      .trim()
+  )
 }
 
 /**
@@ -54,29 +54,29 @@ function stripNoise(line, source) {
  * перевода нет — лучше показать это честно, чем положить в карточку мусор.
  */
 export function cleanTranslation(raw, source = '') {
-    const lines = String(raw ?? '')
-        .split('\n')
-        .map(line => line.trim())
-        .filter(Boolean)
+  const lines = String(raw ?? '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
 
-    for (const line of lines) {
-        const candidate = stripNoise(line, source)
+  for (const line of lines) {
+    const candidate = stripNoise(line, source)
 
-        if (!candidate) {
-            continue
-        }
-        // модель просто вернула исходник — переводить оказалось нечего
-        if (candidate.toLowerCase() === source.toLowerCase()) {
-            continue
-        }
-        // развёрнутое объяснение вместо перевода (частый ответ на артикли)
-        if (candidate.length > MAX_LENGTH && candidate.length > source.length * MAX_RATIO) {
-            continue
-        }
-        return candidate
+    if (!candidate) {
+      continue
     }
+    // модель просто вернула исходник — переводить оказалось нечего
+    if (candidate.toLowerCase() === source.toLowerCase()) {
+      continue
+    }
+    // развёрнутое объяснение вместо перевода (частый ответ на артикли)
+    if (candidate.length > MAX_LENGTH && candidate.length > source.length * MAX_RATIO) {
+      continue
+    }
+    return candidate
+  }
 
-    return ''
+  return ''
 }
 
 /**
@@ -91,45 +91,45 @@ export const SENTENCE_TIMEOUT = 30000
 
 /** внешняя отмена и таймаут — два независимых повода прервать запрос */
 function abortSignal(signal, timeout) {
-    const signals = []
+  const signals = []
 
-    if (signal) {
-        signals.push(signal)
-    }
-    if (timeout) {
-        signals.push(AbortSignal.timeout(timeout))
-    }
-    if (!signals.length) {
-        return undefined
-    }
-    return signals.length === 1 ? signals[0] : AbortSignal.any(signals)
+  if (signal) {
+    signals.push(signal)
+  }
+  if (timeout) {
+    signals.push(AbortSignal.timeout(timeout))
+  }
+  if (!signals.length) {
+    return undefined
+  }
+  return signals.length === 1 ? signals[0] : AbortSignal.any(signals)
 }
 
 /** один запрос к модели; бросает исключение, если сервер недоступен, завис или ответил ошибкой */
 async function complete({ prompt, signal, timeout, maxTokens }) {
-    const response = await fetch(TRANSLATOR_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: abortSignal(signal, timeout),
-        body: JSON.stringify({
-            model: TRANSLATOR_MODEL,
-            temperature: 0,
-            ...(maxTokens ? { max_tokens: maxTokens } : {}),
-            messages: [{ role: 'user', content: prompt }],
-        }),
-    })
+  const response = await fetch(TRANSLATOR_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: abortSignal(signal, timeout),
+    body: JSON.stringify({
+      model: TRANSLATOR_MODEL,
+      temperature: 0,
+      ...(maxTokens ? { max_tokens: maxTokens } : {}),
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
 
-    if (!response.ok) {
-        throw new Error(`Переводчик ответил ${response.status}`)
-    }
+  if (!response.ok) {
+    throw new Error(`Переводчик ответил ${response.status}`)
+  }
 
-    const data = await response.json()
-    return data?.choices?.[0]?.message?.content
+  const data = await response.json()
+  return data?.choices?.[0]?.message?.content
 }
 
 export async function translateOne(text, { from, to, signal, timeout = WORD_TIMEOUT } = {}) {
-    const raw = await complete({ prompt: buildPrompt(text, from, to), signal, timeout })
-    return cleanTranslation(raw, text) || null
+  const raw = await complete({ prompt: buildPrompt(text, from, to), signal, timeout })
+  return cleanTranslation(raw, text) || null
 }
 
 /**
@@ -150,12 +150,12 @@ export const WARMUP_TIMEOUT = 15 * 60 * 1000
  * Бросает исключение, если сервер недоступен или не успел за timeout.
  */
 export async function warmup({ signal, timeout = WARMUP_TIMEOUT } = {}) {
-    await complete({
-        prompt: buildPrompt('ok', 'English', 'Russian'),
-        signal,
-        timeout,
-        maxTokens: 1,
-    })
+  await complete({
+    prompt: buildPrompt('ok', 'English', 'Russian'),
+    signal,
+    timeout,
+    maxTokens: 1,
+  })
 }
 
 /**
@@ -167,25 +167,25 @@ export async function warmup({ signal, timeout = WARMUP_TIMEOUT } = {}) {
  * не переведённые элементы возвращаются как null.
  */
 export async function translateAll(items, { from, to, signal, timeout, onProgress } = {}) {
-    const result = new Array(items.length).fill(null)
-    let done = 0
+  const result = new Array(items.length).fill(null)
+  let done = 0
 
-    for (let i = 0; i < items.length; i++) {
-        if (signal?.aborted) {
-            break
-        }
-        try {
-            result[i] = await translateOne(items[i], { from, to, signal, timeout })
-        } catch (error) {
-            // отменил пользователь — прекращаем очередь; зависло на одном слове —
-            // отдаём по нему null и идём дальше, иначе одно слово рушит весь батч
-            if (signal?.aborted) {
-                break
-            }
-            console.error(`не удалось перевести «${items[i]}»:`, error)
-        }
-        onProgress?.(++done, items.length)
+  for (let i = 0; i < items.length; i++) {
+    if (signal?.aborted) {
+      break
     }
+    try {
+      result[i] = await translateOne(items[i], { from, to, signal, timeout })
+    } catch (error) {
+      // отменил пользователь — прекращаем очередь; зависло на одном слове —
+      // отдаём по нему null и идём дальше, иначе одно слово рушит весь батч
+      if (signal?.aborted) {
+        break
+      }
+      console.error(`не удалось перевести «${items[i]}»:`, error)
+    }
+    onProgress?.(++done, items.length)
+  }
 
-    return result
+  return result
 }

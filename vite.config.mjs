@@ -11,7 +11,7 @@ const proxy = {
   '/llm': {
     target: translator,
     changeOrigin: true,
-    rewrite: path => path.replace(/^\/llm/, ''),
+    rewrite: (path) => path.replace(/^\/llm/, ''),
     // первая загрузка 12B-модели занимает минуты — обычных 30 секунд не хватает
     timeout: 15 * 60 * 1000,
     proxyTimeout: 15 * 60 * 1000,
@@ -24,7 +24,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-    }
+    },
   },
   server: { proxy },
   preview: { proxy },

@@ -1,17 +1,15 @@
 <script setup>
 import Modal from '../common/Modal.vue'
-import Button from "@/components/common/Button.vue";
-import InputText from "@/components/common/InputText.vue";
-import Radio from "@/components/common/Radio.vue";
-import ModeSwitch from "@/components/common/ModeSwitch.vue";
+import Button from '@/components/common/Button.vue'
+import InputText from '@/components/common/InputText.vue'
+import Radio from '@/components/common/Radio.vue'
+import ModeSwitch from '@/components/common/ModeSwitch.vue'
 </script>
 
 <template>
   <div>
     <div class="mb-4 flex items-center justify-between gap-3">
-      <h2 class="text-sm font-semibold text-gray-700">
-        Тренировка: {{ isPhraseMode ? 'фразы' : 'слова' }}
-      </h2>
+      <h2 class="text-sm font-semibold text-gray-700">Тренировка: {{ isPhraseMode ? 'фразы' : 'слова' }}</h2>
       <ModeSwitch />
     </div>
 
@@ -28,95 +26,81 @@ import ModeSwitch from "@/components/common/ModeSwitch.vue";
         <div class="mb-1 text-xs text-gray-500">По уровням</div>
         <div class="flex flex-wrap gap-1">
           <span
-              v-for="(count, i) in wordsInLearn"
-              :key="i"
-              class="rounded-sm bg-gray-100 px-2 py-0.5 text-sm"
-              :title="`Уровень ${i + 1}`"
-          >{{ count }}</span>
+            v-for="(count, i) in wordsInLearn"
+            :key="i"
+            class="rounded-sm bg-gray-100 px-2 py-0.5 text-sm"
+            :title="`Уровень ${i + 1}`"
+            >{{ count }}</span
+          >
         </div>
       </div>
     </div>
 
     <div class="flex flex-wrap gap-2">
+      <Button text="добавить перевод" color="cyan" @click="openLearnModal" />
       <Button
-          text="добавить перевод"
-          color="cyan"
-          @click="openLearnModal"
-      />
-      <Button
-          text="начать повторение"
-          color="green"
-          :disabled="!forLessonCount"
-          :title="forLessonCount ? undefined : 'На сегодня повторять нечего'"
-          @click="start"
+        text="начать повторение"
+        color="green"
+        :disabled="!forLessonCount"
+        :title="forLessonCount ? undefined : 'На сегодня повторять нечего'"
+        @click="start"
       />
     </div>
 
     <p v-if="skippedNote" class="mt-3 text-sm text-amber-700">{{ skippedNote }}</p>
 
     <Modal
-        :isOpen="isOpenAddModal"
-        @close="isOpenAddModal = false"
-        @accept="acceptToLearn"
-        :title="isPhraseMode ? 'Добавление фраз на изучение' : 'Добавление слов на изучение'"
+      :isOpen="isOpenAddModal"
+      @close="isOpenAddModal = false"
+      @accept="acceptToLearn"
+      :title="isPhraseMode ? 'Добавление фраз на изучение' : 'Добавление слов на изучение'"
     >
       <p v-if="!Object.keys(forTranslate ?? {}).length" class="text-sm text-gray-500">
-        {{ isPhraseMode
+        {{
+          isPhraseMode
             ? 'Нет новых фраз — выделите фразу прямо в тексте в разделе «Чтение».'
-            : 'Нет новых слов — добавьте текст в разделе «Чтение».' }}
+            : 'Нет новых слов — добавьте текст в разделе «Чтение».'
+        }}
       </p>
 
-      <div
-          v-for="(translate, word) in forTranslate"
-          :key="word"
-          class="mb-2 grid grid-cols-3 items-center gap-2"
-      >
+      <div v-for="(translate, word) in forTranslate" :key="word" class="mb-2 grid grid-cols-3 items-center gap-2">
         <div class="col-span-1 break-words">{{ word }}</div>
         <div class="col-span-2">
-          <InputText v-model="forTranslate[word]"/>
+          <InputText v-model="forTranslate[word]" />
         </div>
       </div>
 
       <div class="mt-4 flex flex-wrap items-center gap-3">
         <Button
-            :text="translating ? `переводим ${progress.done}/${progress.total}…` : 'перевести автоматически'"
-            :disabled="translating || !untranslated.length"
-            :title="untranslated.length ? `Заполнит пустые поля: ${untranslated.length}` : 'Все поля заполнены'"
-            @click="autoTranslate"
+          :text="translating ? `переводим ${progress.done}/${progress.total}…` : 'перевести автоматически'"
+          :disabled="translating || !untranslated.length"
+          :title="untranslated.length ? `Заполнит пустые поля: ${untranslated.length}` : 'Все поля заполнены'"
+          @click="autoTranslate"
         />
         <span v-if="translateError" class="text-sm text-red-600">{{ translateError }}</span>
       </div>
     </Modal>
 
-    <Modal
-        :isOpen="isOpenLessonModal"
-        @close="isOpenLessonModal = false"
-        @accept="finish"
-        :title="getTitle"
-    >
+    <Modal :isOpen="isOpenLessonModal" @close="isOpenLessonModal = false" @accept="finish" :title="getTitle">
       <div class="text-lg font-medium text-gray-900">{{ question }}</div>
-      <Radio
-          :items="items"
-          v-model="select"
-          @select="checkSelect"
-      />
+      <Radio :items="items" v-model="select" @select="checkSelect" />
     </Modal>
   </div>
 </template>
 
 <script>
-import {mapActions, mapState} from "pinia";
-import {PHRASE, useWordsStore} from "@/stores/words";
+import { mapActions, mapState } from 'pinia'
+import { PHRASE, useWordsStore } from '@/stores/words'
 
 function shuffle(array) {
-  let currentIndex = array.length,  randomIndex;
+  let currentIndex = array.length,
+    randomIndex
   while (currentIndex !== 0) {
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex--;
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
+    randomIndex = Math.floor(Math.random() * currentIndex)
+    currentIndex--
+    ;[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]
   }
-  return array;
+  return array
 }
 
 export default {
@@ -151,8 +135,8 @@ export default {
     /** поля, которые ещё не заполнены — только их и переводим */
     untranslated() {
       return Object.entries(this.forTranslate ?? {})
-          .filter(([, ru]) => !String(ru ?? '').trim())
-          .map(([key]) => key)
+        .filter(([, ru]) => !String(ru ?? '').trim())
+        .map(([key]) => key)
     },
     wordsInQueue() {
       return Object.keys(this.getInterval(0)).length
@@ -166,7 +150,7 @@ export default {
     },
     getTitle() {
       const what = this.isPhraseMode ? 'фразы' : 'слова'
-      return `Выбери перевод ${what} (${Object.keys(this.answers).length + 1}/${this.pool.length})`;
+      return `Выбери перевод ${what} (${Object.keys(this.answers).length + 1}/${this.pool.length})`
     },
   },
   watch: {
@@ -191,7 +175,7 @@ export default {
 
       this.isOpenAddModal = true
       let data = this.getForLearn(this.batchCount)
-      this.forTranslate = data.reduce((o, key) => ({ ...o, [key]: null}), {})
+      this.forTranslate = data.reduce((o, key) => ({ ...o, [key]: null }), {})
     },
     async autoTranslate() {
       // уже введённое рукой не трогаем — перевод модели его бы затёр
@@ -205,7 +189,7 @@ export default {
       this.progress = { done: 0, total: keys.length }
 
       const results = await this.translate(keys, {
-        onProgress: (done, total) => this.progress = { done, total },
+        onProgress: (done, total) => (this.progress = { done, total }),
       })
 
       // null означает, что конкретно это слово не перевелось — уже введённое не затираем
@@ -215,7 +199,7 @@ export default {
         }
       })
 
-      const failed = results.filter(value => !value).length
+      const failed = results.filter((value) => !value).length
       if (failed === keys.length) {
         this.translateError = 'Локальная модель недоступна'
       } else if (failed) {
@@ -225,18 +209,14 @@ export default {
       this.translating = false
     },
     acceptToLearn() {
-      const untranslated = Object.values(this.forTranslate ?? {})
-          .filter(ru => !String(ru ?? '').trim()).length
+      const untranslated = Object.values(this.forTranslate ?? {}).filter((ru) => !String(ru ?? '').trim()).length
 
       this.isOpenAddModal = false
       this.toLearn(this.forTranslate)
 
       // без перевода на изучение не берём — предупреждаем, чтобы не выглядело пропажей
-      this.skippedNote = untranslated
-          ? `Без перевода: ${untranslated}. Остались в очереди.`
-          : null
+      this.skippedNote = untranslated ? `Без перевода: ${untranslated}. Остались в очереди.` : null
     },
-
 
     start() {
       // без этой проверки урок открылся бы и тут же сам себя закрыл
@@ -249,7 +229,7 @@ export default {
 
       this.forLesson = JSON.parse(JSON.stringify(this.getForLesson))
       this.isOpenLessonModal = true
-      this.pool = Object.values(this.forLesson).map(x => x.ru)
+      this.pool = Object.values(this.forLesson).map((x) => x.ru)
       this.prepareQuestion()
     },
     prepareQuestion() {
@@ -261,7 +241,7 @@ export default {
         // разные слова нередко переводятся одинаково («дать» у give/gave/giving),
         // поэтому отвлекающие варианты берём из различных переводов: иначе в вопросе
         // окажется несколько одинаковых кнопок вместо четырёх разных
-        const distractors = [...new Set(this.pool)].filter(x => x && x !== translate)
+        const distractors = [...new Set(this.pool)].filter((x) => x && x !== translate)
         let cases = shuffle(distractors).slice(0, 3)
         cases = shuffle([...cases, translate])
 
@@ -284,6 +264,6 @@ export default {
       this.answers = {}
       this.pool = []
     },
-  }
+  },
 }
 </script>

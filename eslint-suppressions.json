@@ -1,0 +1,66 @@
+{
+  "postcss.config.js": {
+    "no-undef": {
+      "count": 1
+    }
+  },
+  "src/components/common/Button.vue": {
+    "vue/no-reserved-component-names": {
+      "count": 1
+    }
+  },
+  "src/components/common/Modal.vue": {
+    "no-unused-vars": {
+      "count": 3
+    }
+  },
+  "src/components/common/Progress.vue": {
+    "vue/no-reserved-component-names": {
+      "count": 1
+    }
+  },
+  "src/components/old/Dashboard.vue": {
+    "no-undef": {
+      "count": 1
+    },
+    "no-unused-vars": {
+      "count": 1
+    },
+    "vue/require-v-for-key": {
+      "count": 1
+    }
+  },
+  "src/components/old/EnglishBoost.vue": {
+    "vue/no-unused-components": {
+      "count": 3
+    }
+  },
+  "src/components/old/ExploreMode.vue": {
+    "no-unused-vars": {
+      "count": 1
+    }
+  },
+  "src/components/old/TrainingMode.vue": {
+    "no-unused-vars": {
+      "count": 1
+    },
+    "vue/require-v-for-key": {
+      "count": 1
+    }
+  },
+  "src/components/old/Words.vue": {
+    "vue/require-v-for-key": {
+      "count": 1
+    }
+  },
+  "src/domain/Words.js": {
+    "no-prototype-builtins": {
+      "count": 1
+    }
+  },
+  "vite.config.mjs": {
+    "no-undef": {
+      "count": 1
+    }
+  }
+}

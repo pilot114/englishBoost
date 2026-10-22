@@ -1,0 +1,8 @@
+# prettier форматирует только код; тексты, данные и сборки — как есть
+/dist/
+*.md
+*.json
+*.yml
+*.yaml
+*.lock
+package-lock.json
